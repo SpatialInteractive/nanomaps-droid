@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>nanomaps-sample</name>
+	<name>nanomaps-test</name>
 	<comment></comment>
 	<projects>
+		<project>nanomaps-library</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -30,16 +31,4 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>nanomaps-library_src</name>
-			<type>2</type>
-			<locationURI>_android_nanomaps_library_e9949439/src</locationURI>
-		</link>
-		<link>
-			<name>nanomaps-library_test</name>
-			<type>2</type>
-			<locationURI>_android_nanomaps_library_e9949439/test</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>

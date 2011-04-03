@@ -32,7 +32,7 @@ package net.rcode.nanomaps;
  *
  */
 public class MapState {
-	private MapSurface surface;
+	private MapStateAware listener;
 	
 	private Projection projection;
 	
@@ -52,26 +52,55 @@ public class MapState {
 	private double viewportOriginY;
 	
 	/**
+	 * Width of the viewport.  Automatically set by the MapSurface.
+	 */
+	private int viewportWidth;
+
+	/**
+	 * Height of the viewport.  Automatically set by the MapSurface.
+	 */
+	private int viewportHeight;
+	
+	/**
 	 * Counter to indicate we are doing a batch operation
 	 */
-	private int batch;
+	private int lockCount;
+	private boolean lockUpdated;
+	private boolean lockUpdatedFull;
 	
 	public MapState(Projection projection) {
 		this.projection=projection;
 		this.resolution=projection.fromLevel(projection.getMinLevel());
 		
-		DoubleBoundingBox extent=projection.getProjectedExtent();
+		Bounds extent=projection.getProjectedExtent();
 		setViewportProjected((extent.getMinx()+extent.getMaxx())/2, 
 				(extent.getMiny()+extent.getMaxy())/2,
 				0, 0);
 	}
 	
-	private void _updated(boolean justOrigin) {
-		if (batch>0) return;
+	private void _updated(boolean fullUpdate) {
+		if (lockCount>0) {
+			lockUpdated=true;
+			if (fullUpdate) lockUpdatedFull=true;
+			return;
+		}
+		if (listener!=null) listener.mapStateUpdated(this, fullUpdate);
 	}
 	
-	void setSurface(MapSurface surface) {
-		this.surface=surface;
+	void setListener(MapStateAware listener) {
+		this.listener=listener;
+	}
+	
+	public void lock() {
+		if (++lockCount == 1) {
+			lockUpdated=false;
+			lockUpdatedFull=false;
+		}
+	}
+	public void unlock() {
+		if (--lockCount==0) {
+			if (lockUpdated) _updated(lockUpdatedFull);
+		}
 	}
 	
 	public Projection getProjection() {
@@ -89,14 +118,16 @@ public class MapState {
 	 * @param y
 	 */
 	public void setResolution(double resolution, int x, int y) {
-		batch++;
-		double projectedX=getViewportProjectedX(x, y);
-		double projectedY=getViewportProjectedY(x, y);
-		this.resolution=resolution;
-		setViewportProjected(projectedX, projectedY, x, y);
-		batch--;
-		
-		_updated(false);
+		if (resolution!=this.resolution) {
+			lock();
+			double projectedX=getViewportProjectedX(x, y);
+			double projectedY=getViewportProjectedY(x, y);
+			this.resolution=resolution;
+			setViewportProjected(projectedX, projectedY, x, y);
+			lockUpdated=true;
+			lockUpdatedFull=true;
+			unlock();
+		}
 	}
 	
 	public double getLevel() {
@@ -119,6 +150,18 @@ public class MapState {
 	 */
 	public double getViewportOriginY() {
 		return viewportOriginY;
+	}
+
+	public int getViewportWidth() {
+		return viewportWidth;
+	}
+	public int getViewportHeight() {
+		return viewportHeight;
+	}
+	
+	public void setViewportSize(int w, int h) {
+		this.viewportWidth=w;
+		this.viewportHeight=h;
 	}
 	
 	/**
@@ -199,9 +242,11 @@ public class MapState {
 	 * @param deltaY
 	 */
 	public void moveOrigin(int deltaX, int deltaY) {
-		viewportOriginX+=deltaX;
-		viewportOriginY+=deltaY;
-		_updated(true);
+		if (deltaX!=0 || deltaY!=0) {
+			viewportOriginX+=deltaX;
+			viewportOriginY+=deltaY;
+			_updated(false);
+		}
 	}
 	
 	/**
@@ -214,11 +259,13 @@ public class MapState {
 	 * @param y
 	 */
 	public void setViewportProjected(double projectedX, double projectedY, int x, int y) {
-		projectedX=projectedToDisplayX(projectedX);
-		projectedY=projectedToDisplayY(projectedY);
-		viewportOriginX=projectedX - x;
-		viewportOriginY=projectedY - y;
-		_updated(true);
+		projectedX=projectedToDisplayX(projectedX) - x;
+		projectedY=projectedToDisplayY(projectedY) - y;
+		if (projectedX!=viewportOriginX || projectedY!=viewportOriginY) {
+			viewportOriginX=projectedX;
+			viewportOriginY=projectedY;
+			_updated(false);
+		}
 	}
 	
 	
@@ -245,5 +292,23 @@ public class MapState {
 	 */
 	public void setViewportLatLng(double lat, double lng, int x, int y) {
 		setViewportGlobal(lng, lat, x, y);
+	}
+	
+	/**
+	 * Convenience to set the center in global coordinates
+	 * @param globalX
+	 * @param globalY
+	 */
+	public void setCenterGlobal(double globalX, double globalY) {
+		setViewportGlobal(globalX, globalY, viewportWidth/2, viewportHeight/2);
+	}
+	
+	/**
+	 * Convenience to set the center in lat/lng
+	 * @param lat
+	 * @param lng
+	 */
+	public void setCenterLatLng(double lat, double lng) {
+		setViewportGlobal(lng, lat, viewportWidth/2, viewportHeight/2);
 	}
 }

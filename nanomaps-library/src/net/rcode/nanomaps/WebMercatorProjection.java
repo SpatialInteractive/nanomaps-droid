@@ -10,14 +10,14 @@ package net.rcode.nanomaps;
  *
  */
 public class WebMercatorProjection implements Projection {
-	private static DoubleBoundingBox GLOBAL_EXTENT=new DoubleBoundingBox(
-			-180.0, -85.0511, 180.0, 85.0511
+	private static Bounds GLOBAL_EXTENT=new Bounds(
+			-180.0, -85.05112878, 180.0, 85.05112878
 			);
-	private static DoubleBoundingBox PROJECTED_EXTENT;
+	private static Bounds PROJECTED_EXTENT;
 	public static WebMercatorProjection DEFAULT=new WebMercatorProjection();
 	
 	static {
-		PROJECTED_EXTENT=new DoubleBoundingBox(
+		PROJECTED_EXTENT=new Bounds(
 				DEFAULT.forwardX(GLOBAL_EXTENT.getMinx()),
 				DEFAULT.forwardY(GLOBAL_EXTENT.getMiny()),
 				DEFAULT.forwardX(GLOBAL_EXTENT.getMaxx()),
@@ -98,12 +98,12 @@ public class WebMercatorProjection implements Projection {
 	}
 	
 	@Override
-	public DoubleBoundingBox getGlobalExtent() {
+	public Bounds getGlobalExtent() {
 		return GLOBAL_EXTENT;
 	}
 	
 	@Override
-	public DoubleBoundingBox getProjectedExtent() {
+	public Bounds getProjectedExtent() {
 		return PROJECTED_EXTENT;
 	}
 }

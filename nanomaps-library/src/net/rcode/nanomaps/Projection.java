@@ -76,10 +76,10 @@ public interface Projection {
 	/**
 	 * @return the extent of the projected units
 	 */
-	public DoubleBoundingBox getProjectedExtent();
+	public Bounds getProjectedExtent();
 	
 	/**
 	 * @return the extent in global units
 	 */
-	public DoubleBoundingBox getGlobalExtent();
+	public Bounds getGlobalExtent();
 }
