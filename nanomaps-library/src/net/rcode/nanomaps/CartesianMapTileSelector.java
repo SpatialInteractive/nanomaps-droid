@@ -32,7 +32,7 @@ public class CartesianMapTileSelector extends MapTileSelector {
 		y2/=nativeResolution;
 		
 		// Axis inversion madness - gotta love it
-		if (xinversion) {
+		if (yinversion) {
 			nativeOriginY=projectedBounds.getMaxy() / nativeResolution;
 			y1=nativeOriginY-y1;
 			y2=nativeOriginY-y2;
@@ -42,7 +42,7 @@ public class CartesianMapTileSelector extends MapTileSelector {
 			y2=y2-nativeOriginY;
 		}
 		
-		if (yinversion) {
+		if (xinversion) {
 			nativeOriginX=projectedBounds.getMaxx() / nativeResolution;
 			x1=nativeOriginX-x1;
 			x2=nativeOriginX-x2;
