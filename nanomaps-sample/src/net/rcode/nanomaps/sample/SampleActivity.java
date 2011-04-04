@@ -4,6 +4,7 @@ import net.rcode.nanomaps.CartesianMapTileSelector;
 import net.rcode.nanomaps.MapState;
 import net.rcode.nanomaps.MapSurface;
 import net.rcode.nanomaps.MapTileView;
+import net.rcode.nanomaps.sample.widgets.MapControls;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -30,6 +31,13 @@ public class SampleActivity extends Activity {
         
         MapTileView mtv=new MapTileView(this, new CartesianMapTileSelector());
         map.getBackgroundLayer().addView(mtv);
+        
+        // Add zoom control
+        MapControls mapControls=new MapControls(map);
+        RelativeLayout.LayoutParams lp=new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        lp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        map.addView(mapControls.createZoomControl(R.layout.nmsmallzoom), lp);
         
         setContentView(rl);
     }

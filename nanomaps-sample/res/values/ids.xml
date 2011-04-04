@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- Pre-allocate ids that are used by user defined layouts -->
+    <item type="id" name="nmbtnzoomout" />
+    <item type="id" name="nmbtnzoomin" />
+</resources>

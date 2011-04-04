@@ -3,6 +3,8 @@ package net.rcode.nanomaps;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.RelativeLayout;
 
 /**
@@ -27,6 +29,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 		// Allocate the background layer
 		backgroundLayer=createContentView();
 		addView(backgroundLayer, createFillLayoutParams());
+		setupTouchEvents(backgroundLayer);
 	}
 
 	private MapContentView createContentView() {
@@ -70,4 +73,99 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 		if (DEBUG) Log.d(Constants.LOG_TAG, "onSizeChanged(" + w + "," + h + ")");
 		mapState.setViewportSize(w, h);
 	}
+	
+	// -- touch handling
+	protected static final int TOUCH_STATE_NONE=0;
+	protected static final int TOUCH_STATE_SINGLE=1;
+	protected int touchState;
+	protected float touchAnchorX, touchAnchorY;
+	
+	protected void setupTouchEvents(final View target) {
+		target.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				handleTouchEvent(event);
+				return true;
+			}
+		});
+	}
+	
+	protected void handleTouchEvent(MotionEvent event) {
+		// Newer api levels support multi-touch and getters to separate them.
+		// We just do the bitwise math.  Lower 8bits==action, next 8bits==pointer index.
+		int action=event.getAction() & 0xff;
+		int pid=(event.getAction() & 0xff00) >> 8;
+		
+		switch (action) {
+		case MotionEvent.ACTION_MOVE:
+			// Accumulate
+			if (pid==0) {
+				handleTouchMovePrimary(event);
+			}
+			break;
+		case MotionEvent.ACTION_DOWN:
+			// Initiate a gesture
+			if (pid==0) {
+				handleTouchStart(event);
+			}
+			break;
+		case MotionEvent.ACTION_UP:
+			// End the gesture
+			if (pid==0) {
+				handleTouchDone(event, false);
+			}
+			break;
+			
+		case MotionEvent.ACTION_CANCEL:
+			// Framework cancelled the gesture
+			if (pid==0) {
+				handleTouchDone(event, true);
+			}
+			break;
+		}
+	}
+	
+	protected void clearTouchState() {
+		touchState=TOUCH_STATE_NONE;
+	}
+	
+	protected void handleTouchStart(MotionEvent event) {
+		clearTouchState();
+		touchState=TOUCH_STATE_SINGLE;
+		touchAnchorX=event.getX();
+		touchAnchorY=event.getY();
+		if (DEBUG) Log.d(Constants.LOG_TAG, "Start touch: " + event);
+	}
+	
+	protected void handleTouchMovePrimary(MotionEvent event) {
+		if (touchState==TOUCH_STATE_SINGLE) {
+			//if (DEBUG) Log.d(Constants.LOG_TAG, "Touch move: " + event);
+			
+			float currentX=event.getX();
+			float currentY=event.getY();
+			
+			float deltaX=touchAnchorX - currentX;
+			float deltaY=touchAnchorY - currentY;
+			
+			// Update the map state
+			mapState.moveViewport(deltaX, deltaY);
+			touchAnchorX=currentX;
+			touchAnchorY=currentY;
+		}
+	}
+	
+	protected void handleTouchDone(MotionEvent event, boolean cancelled) {
+		if (DEBUG) Log.d(Constants.LOG_TAG, "Touch done: " + event);
+
+		clearTouchState();
+	}
+	
+	// -- public api
+	public int getMapMaxLevel() {
+		return mapState.getProjection().getMaxLevel();
+	}
+	public int getMapMinLevel() {
+		return mapState.getProjection().getMinLevel();
+	}
+	
 }

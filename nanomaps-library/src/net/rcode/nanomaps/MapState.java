@@ -152,6 +152,12 @@ public class MapState {
 		return viewportOriginY;
 	}
 
+	public void setViewportOrigin(double x, double y) {
+		this.viewportOriginX=x;
+		this.viewportOriginY=y;
+		_updated(false);
+	}
+	
 	public int getViewportWidth() {
 		return viewportWidth;
 	}
@@ -241,12 +247,10 @@ public class MapState {
 	 * @param deltaX
 	 * @param deltaY
 	 */
-	public void moveOrigin(int deltaX, int deltaY) {
-		if (deltaX!=0 || deltaY!=0) {
-			viewportOriginX+=deltaX;
-			viewportOriginY+=deltaY;
-			_updated(false);
-		}
+	public void moveViewport(double deltaX, double deltaY) {
+		viewportOriginX+=deltaX;
+		viewportOriginY+=deltaY;
+		_updated(false);
 	}
 	
 	/**

@@ -78,10 +78,10 @@ public class MapTileView extends View implements MapStateAware {
 		public void handleTile(TileKey tile) {
 			Rect rect=new Rect();
 			mapTileToDisplay(mapState, tile, rect);
-			Log.d(Constants.LOG_TAG, "Blitter tile: " + tile + " -> " + rect);
+			//Log.d(Constants.LOG_TAG, "Blitter tile: " + tile + " -> " + rect);
 			
 			Paint paint=new Paint();
-			paint.setColor(COLORS[tile.hashCode() % COLORS.length]);
+			paint.setColor(COLORS[Math.abs(tile.hashCode()) % COLORS.length]);
 			canvas.drawRoundRect(new RectF(rect), 10, 10, paint);
 			
 			paint.setColor(Color.BLACK);
