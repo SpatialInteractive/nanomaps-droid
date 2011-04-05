@@ -1,9 +1,10 @@
 package net.rcode.nanomaps.sample;
 
-import net.rcode.nanomaps.CartesianMapTileSelector;
+import net.rcode.nanomaps.CartesianTileSelector;
 import net.rcode.nanomaps.MapState;
 import net.rcode.nanomaps.MapSurface;
 import net.rcode.nanomaps.MapTileView;
+import net.rcode.nanomaps.UriTileSelector;
 import net.rcode.nanomaps.sample.widgets.MapControls;
 import android.app.Activity;
 import android.graphics.Color;
@@ -29,7 +30,7 @@ public class SampleActivity extends Activity {
         ms.setCenterLatLng(47.626967, -122.315352);
         ms.unlock();
         
-        MapTileView mtv=new MapTileView(this, new CartesianMapTileSelector());
+        MapTileView mtv=new MapTileView(this, new UriTileSelector("http://otile${modulo:1,2,3}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"));
         map.getBackgroundLayer().addView(mtv);
         
         // Add zoom control

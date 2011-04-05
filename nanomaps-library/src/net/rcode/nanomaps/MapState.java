@@ -254,6 +254,24 @@ public class MapState {
 	}
 	
 	/**
+	 * Set the origin of the viewport in display units.
+	 * @param displayX
+	 * @param displayY
+	 * @param x
+	 * @param y
+	 */
+	public void setViewportDisplay(double displayX, double displayY, int x, int y) {
+		displayX=displayX - x;
+		displayY=displayY - y;
+		
+		if (displayX!=viewportOriginX || displayY!=viewportOriginY) {
+			viewportOriginX=displayX;
+			viewportOriginY=displayY;
+			_updated(false);
+		}
+	}
+	
+	/**
 	 * Set the origin of the viewport in projected units.
 	 * If (x,y) is non zero, then this indicates that the given projected coordinates
 	 * should be under these viewport coordinates.
@@ -263,13 +281,7 @@ public class MapState {
 	 * @param y
 	 */
 	public void setViewportProjected(double projectedX, double projectedY, int x, int y) {
-		projectedX=projectedToDisplayX(projectedX) - x;
-		projectedY=projectedToDisplayY(projectedY) - y;
-		if (projectedX!=viewportOriginX || projectedY!=viewportOriginY) {
-			viewportOriginX=projectedX;
-			viewportOriginY=projectedY;
-			_updated(false);
-		}
+		setViewportDisplay(projectedToDisplayX(projectedX), projectedToDisplayY(projectedY), x, y);
 	}
 	
 	

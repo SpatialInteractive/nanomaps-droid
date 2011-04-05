@@ -1,12 +1,16 @@
 package net.rcode.nanomaps;
 
-import net.rcode.nanomaps.MapTileSelector.TileKey;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+import net.rcode.nanomaps.TileSet.Record;
+
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.View;
 
@@ -17,19 +21,23 @@ import android.view.View;
  * @author stella
  *
  */
-public class MapTileView extends View implements MapStateAware {
-	private static final int COLORS[] = new int[] {
-		Color.BLUE, Color.GREEN, Color.CYAN, Color.LTGRAY, Color.RED, Color.MAGENTA, Color.YELLOW
-	};
-	
-	private MapTileSelector selector;
+public class MapTileView extends View implements MapStateAware, Tile.StateChangedListener {
+	static final Paint CLEAR_PAINT=new Paint();
+	static {
+		CLEAR_PAINT.setARGB(0, 0, 0, 0);
+	}
 
-	public MapTileView(Context context, MapTileSelector selector) {
+	private TileSelector selector;
+	private TileSet currentTileSet=new TileSet();
+	private ArrayList<TileKey> updatedKeys=new ArrayList<TileKey>(32);
+	private ArrayList<TileSet.Record> newTileRecords=new ArrayList<TileSet.Record>(32);
+	
+	public MapTileView(Context context, TileSelector selector) {
 		super(context);
 		this.selector=selector;
 	}
 	
-	public MapTileSelector getSelector() {
+	public TileSelector getSelector() {
 		return selector;
 	}
 	
@@ -43,9 +51,81 @@ public class MapTileView extends View implements MapStateAware {
 	
 	@Override
 	public void mapStateUpdated(MapState mapState, boolean full) {
+		currentTileSet.resetMarks();
+		
+		int right=getWidth()-1, bottom=getHeight()-1;
+		
+		// Clear our shared state for a new run
+		updatedKeys.clear();
+		newTileRecords.clear();
+		
+		// Select tile keys that intersect our display area
+		selector.select(mapState.getProjection(),
+				mapState.getResolution(),
+				mapState.getViewportProjectedX(0, 0),
+				mapState.getViewportProjectedY(0, 0),
+				mapState.getViewportProjectedX(right, bottom),
+				mapState.getViewportProjectedY(right, bottom),
+				updatedKeys);
+
+		// Match them up against what we are already displaying
+		for (int i=0; i<updatedKeys.size(); i++) {
+			TileKey key=updatedKeys.get(i);
+			TileSet.Record record=currentTileSet.get(key);
+			if (record==null) {
+				record=currentTileSet.create(key);
+				record.displayRect=new Rect();
+				newTileRecords.add(record);
+			} else {
+				Log.d(Constants.LOG_TAG, "Recycling tile from TileSet: " + key);
+			}
+			record.marked=true;
+			
+			// Update its display rect
+			mapTileToDisplay(mapState, key, record.displayRect);
+		}
+		
+		// Remove/destroy any tiles that were not visited
+		currentTileSet.sweep();
+		
+		// newTileRecords now contains all records that have been newly allocated.
+		// We initialize them here in this ass-backwards way because we want to sort
+		// them by proximity to the center but don't have the display information until
+		// after we've iterated over all of them.  Think of this as the "initialize new
+		// tiles" loop
+		sortTileSetRecords(newTileRecords);
+		for (int i=0; i<newTileRecords.size(); i++) {
+			TileSet.Record record=newTileRecords.get(i);
+			record.tile=selector.resolve(record.key, currentTileSet);
+			if (record.tile.getState()!=Tile.STATE_LOADED) {
+				record.tile.setStateChangedListener(MapTileView.this);
+			}
+		}
+		
+		//if (handler.needsRedraw) {
 		invalidate();
+		//}
 	}
 	
+	private class TileCentroidComparator implements Comparator<TileSet.Record> {
+		private int centerY;
+		private int centerX;
+		public TileCentroidComparator() {
+			this.centerX=getWidth()/2;
+			this.centerY=getHeight()/2;
+		}
+		@Override
+		public int compare(Record object1, Record object2) {
+			int score1=Math.abs(object1.displayRect.centerX()-centerX) + Math.abs(object1.displayRect.centerY()-centerY);
+			int score2=Math.abs(object2.displayRect.centerX()-centerX) + Math.abs(object2.displayRect.centerY()-centerY);
+			return score1-score2;
+		}
+	}
+	
+	private void sortTileSetRecords(ArrayList<TileSet.Record> newTileRecords) {
+		Collections.sort(newTileRecords, new TileCentroidComparator());
+	}
+
 	/**
 	 * Given a MapState and TileKey, fill in a Rect with the pixel coordinates
 	 * of the tile for the current state.
@@ -55,9 +135,9 @@ public class MapTileView extends View implements MapStateAware {
 	 * @param tile
 	 */
 	static void mapTileToDisplay(MapState mapState, TileKey tile, Rect rect) {
-		double scaledSize=tile.size * tile.resolution / mapState.getResolution();
-		double left=mapState.projectedToDisplayX(tile.scaledX * tile.resolution) - mapState.getViewportOriginX();
-		double top=mapState.projectedToDisplayY(tile.scaledY * tile.resolution) - mapState.getViewportOriginY();
+		double scaledSize=tile.getSize() * tile.getResolution() / mapState.getResolution();
+		double left=mapState.projectedToDisplayX(tile.getScaledX() * tile.getResolution()) - mapState.getViewportOriginX();
+		double top=mapState.projectedToDisplayY(tile.getScaledY() * tile.getResolution()) - mapState.getViewportOriginY();
 		
 		rect.left=(int) Math.round(left);
 		rect.top=(int) Math.round(top);
@@ -65,46 +145,42 @@ public class MapTileView extends View implements MapStateAware {
 		rect.bottom=rect.top + (int) Math.ceil(scaledSize);
 	}
 	
-	private class Blitter implements MapTileSelector.Handler {
-		private MapState mapState;
-		private Canvas canvas;
-		
-		public Blitter(MapState mapState, Canvas canvas) {
-			this.mapState=mapState;
-			this.canvas=canvas;
-		}
-
-		@Override
-		public void handleTile(TileKey tile) {
-			Rect rect=new Rect();
-			mapTileToDisplay(mapState, tile, rect);
-			//Log.d(Constants.LOG_TAG, "Blitter tile: " + tile + " -> " + rect);
-			
-			Paint paint=new Paint();
-			paint.setColor(COLORS[Math.abs(tile.hashCode()) % COLORS.length]);
-			canvas.drawRoundRect(new RectF(rect), 10, 10, paint);
-			
-			paint.setColor(Color.BLACK);
-			canvas.drawText(tile.toString(), rect.left+5, rect.centerY(), paint);
-		}
-	}
 	
 	@Override
-	protected void onDraw(Canvas canvas) {
-		MapState mapState=getMapState();
+	protected void onDraw(final Canvas canvas) {
+		// On first draw we may not have had a map state update yet
+		if (currentTileSet.isEmpty()) {
+			mapStateUpdated(getMapState(), true);
+		}
 		
-		Rect bounds=canvas.getClipBounds();
-		Log.d(Constants.LOG_TAG, "MapTileView.onDraw(clip=" + canvas.getClipBounds() + ")");
+		Rect clip=canvas.getClipBounds();
 		
-		Blitter blitter=new Blitter(mapState, canvas);
+		for (TileSet.Record record: currentTileSet.records()) {
+			if (Rect.intersects(clip, record.displayRect)) {
+				Log.d(Constants.LOG_TAG, "DRAW TILE: " + record.tile);
+				Drawable drawable=record.tile.getDrawable();
+				if (drawable!=null) {
+					// Draw it
+					drawable.setBounds(record.displayRect);
+					drawable.draw(canvas);
+				} else {
+					// Clear the area
+					Log.d(Constants.LOG_TAG, "Clearing " + record.displayRect);
+					canvas.drawRect(record.displayRect, CLEAR_PAINT);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void tileStateChanged(Tile tile) {
+		Log.d(Constants.LOG_TAG, "Tile state changed: " + tile.getState());
 		
-		selector.select(mapState.getProjection(),
-				mapState.getResolution(),
-				mapState.getViewportProjectedX(bounds.left, bounds.top),
-				mapState.getViewportProjectedY(bounds.left, bounds.top),
-				mapState.getViewportProjectedX(bounds.right, bounds.bottom),
-				mapState.getViewportProjectedY(bounds.right, bounds.bottom),
-				blitter);
+		// If it is still in the current set, invalidate its bounds
+		TileSet.Record record=currentTileSet.get(tile.getKey());
+		if (record!=null) {
+			invalidate(record.displayRect);
+		}
 	}
 	
 }

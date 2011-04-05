@@ -1,18 +1,37 @@
 package net.rcode.nanomaps;
 
+import java.util.Collection;
+
 /**
- * A tile selector for tiles laid out in "normal" fashion for
- * the web.
+ * Base class for tile selectors that represent tiles in a cartesian
+ * grid.  This produces CartesianTileKey instances.
+ * <p>
+ * The base class implements a select() method that presumes that tiles
+ * are numbered from the upper left corner of the projected bounds and
+ * exist at fixed native levels corresponding to the integers between
+ * the projection's minimum and maximum levels (inclusive).
+ * <p>
+ * For exotic cases, sub-classes should just wholesale override the select()
+ * method.  For variations that should be configurable, we will want to add
+ * virtual methods that the base class select() calls to configure itself.
+ * As I don't have example of variations right now, I have not added any
+ * abstraction to keep things simple.
+ * <p>
+ * This class should support configuration with respect to the levels
+ * actually supported but this has not yet been implemented.
+ * <p>
+ * Subclasses need to define the resolve() method.
+ * 
  * @author stella
  *
  */
-public class CartesianMapTileSelector extends MapTileSelector {
+public abstract class CartesianTileSelector extends TileSelector {
 	private int tileSize=256;
 	
 	@Override
 	public void select(Projection projection, double resolution, 
 			double x1, double y1, double x2, double y2, 
-			Handler callback) {
+			Collection<TileKey> destination) {
 		Bounds projectedBounds=projection.getProjectedExtent();
 		boolean xinversion=projection.isXAxisInverted();
 		boolean yinversion=projection.isYAxisInverted();
@@ -69,7 +88,8 @@ public class CartesianMapTileSelector extends MapTileSelector {
 				else projectedX=nativeOriginX + i*tileSize;
 				
 				
-				TileKey tk=new TileKey(nativeLevel,
+				CartesianTileKey tk=new CartesianTileKey(this,
+						nativeLevel,
 						i,
 						j,
 						nativeResolution,
@@ -77,41 +97,8 @@ public class CartesianMapTileSelector extends MapTileSelector {
 						projectedY,
 						tileSize);
 				
-				callback.handleTile(tk);
+				destination.add(tk);
 			}
-		}
-	}
-	
-	
-	public class TileKey extends MapTileSelector.TileKey {
-		public final int level;
-		public final int tileX;
-		public final int tileY;
-		
-		public TileKey(int level, int tileX, int tileY,
-				double resolution, double scaledX, double scaledY,
-				int size) {
-			super(resolution, scaledX, scaledY, size);
-			this.level=level;
-			this.tileX=tileX;
-			this.tileY=tileY;
-		}
-		
-		@Override
-		public int hashCode() {
-			return (level * 97) ^ tileX ^ tileY;
-		}
-		
-		@Override
-		public boolean equals(Object o) {
-			TileKey other=(TileKey)o;
-			if (other==null) return false;
-			return other.level==this.level && other.tileX==this.tileX && other.tileY==this.tileY;
-		}
-		
-		@Override
-		public String toString() {
-			return String.format("Tile(level=%s,x=%s,y=%s)", level, tileX, tileY);
 		}
 	}
 }

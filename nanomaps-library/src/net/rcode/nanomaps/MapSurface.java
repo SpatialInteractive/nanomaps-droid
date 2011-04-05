@@ -1,6 +1,7 @@
 package net.rcode.nanomaps;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -19,6 +20,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	static final boolean DEBUG=true;
 	MapState mapState;
 	MapContentView backgroundLayer;
+	boolean didFirstDraw;
 	
 	public MapSurface(Context context) {
 		super(context);
@@ -59,6 +61,8 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	 * other geometry remains the same
 	 */
 	public void mapStateUpdated(MapState mapState, boolean full) {
+		if (!didFirstDraw) return;
+		
 		if (DEBUG) Log.d(Constants.LOG_TAG, "mapStateUpdated(" + full + ")");
 		
 		// TODO: Iterate over all content views
@@ -69,9 +73,35 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
 		
-		// TODO: We want to preserve center on size change
-		if (DEBUG) Log.d(Constants.LOG_TAG, "onSizeChanged(" + w + "," + h + ")");
+		// Preserve the center point on size change
+		double oldx=mapState.getViewportDisplayX(oldw/2, oldh/2);
+		double oldy=mapState.getViewportDisplayY(oldw/2, oldh/2);
+		
 		mapState.setViewportSize(w, h);
+		
+		mapState.setViewportDisplay(oldx, oldy, w/2, h/2);
+	}
+	
+	@Override
+	protected void onAttachedToWindow() {
+		super.onAttachedToWindow();
+		didFirstDraw=false;
+	}
+	
+	@Override
+	protected void onDetachedFromWindow() {
+		super.onDetachedFromWindow();
+		didFirstDraw=false;
+	}
+	
+	@Override
+	protected void onDraw(Canvas canvas) {
+		// Make sure to get map update events primed on first draw
+		if (!didFirstDraw) {
+			didFirstDraw=true;
+			mapStateUpdated(mapState, true);
+		}
+		super.onDraw(canvas);
 	}
 	
 	// -- touch handling
@@ -89,6 +119,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 			}
 		});
 	}
+	
 	
 	protected void handleTouchEvent(MotionEvent event) {
 		// Newer api levels support multi-touch and getters to separate them.
