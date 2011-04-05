@@ -30,6 +30,9 @@ import android.util.Log;
 
 /**
  * An HttpAgent talks to a single http server and pipelines requests to it.
+ * TODO: This class started with one design in mind and ended with another.
+ * It needs some rework.
+ * 
  * @author stella
  */
 public class HttpAgent {

@@ -9,7 +9,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 
 /**
  * A Drawable that consists of a set of children each with their own
