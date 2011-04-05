@@ -1,5 +1,8 @@
 package net.rcode.nanomaps;
 
+import net.rcode.nanomaps.io.DefaultResourceLoader;
+import net.rcode.nanomaps.io.ResourceLoader;
+
 /**
  * Extends CartesianTileSelector to resolve tiles from external
  * bitmap sources.  It returns BitmapTile instances.

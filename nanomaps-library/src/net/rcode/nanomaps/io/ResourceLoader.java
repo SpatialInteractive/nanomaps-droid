@@ -1,4 +1,4 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.io;
 
 import java.io.InputStream;
 

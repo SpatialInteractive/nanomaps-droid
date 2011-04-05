@@ -2,6 +2,8 @@ package net.rcode.nanomaps;
 
 import java.io.InputStream;
 
+import net.rcode.nanomaps.io.ResourceLoader;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;

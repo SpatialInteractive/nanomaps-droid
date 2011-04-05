@@ -1,4 +1,4 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.io;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+
+import net.rcode.nanomaps.Constants;
 
 import android.net.Uri;
 import android.os.Handler;
@@ -30,14 +32,20 @@ public class DefaultResourceLoader extends ResourceLoader {
 	
 	Map<String, IOQueue> queues=new HashMap<String, IOQueue>();
 	
-	IOQueue getQueue(String key) {
+	IOQueue getQueue(String key, int maxWorkers, int idleLinger) {
 		synchronized (queues) {
 			IOQueue existing=queues.get(key);
 			if (existing==null) {
-				existing=new IOQueue(key, DEFAULT_WORKERS_PER_QUEUE, DEFAULT_IDLE_LINGER);
+				existing=new IOQueue(key, maxWorkers, idleLinger);
 				queues.put(key, existing);
 			}
 			return existing;
+		}
+	}
+	
+	void removeQueue(String key) {
+		synchronized (queues) {
+			queues.remove(key);
 		}
 	}
 	
@@ -53,6 +61,7 @@ public class DefaultResourceLoader extends ResourceLoader {
 		public IOQueue(String key, int maxWorkers, int idleLinger) {
 			this.key=key;
 			this.maxWorkers=maxWorkers;
+			this.idleLinger=idleLinger;
 		}
 		
 		/**
@@ -61,12 +70,6 @@ public class DefaultResourceLoader extends ResourceLoader {
 		 */
 		public IORequest next(IOWorker worker) {
 			synchronized (this) {
-				if (worker.firstTime) {
-					worker.firstTime=false;
-					// We artificially increase idleCount in startOne
-					// to avoid a race condition.  Decrease it here.
-					idleCount--;
-				}
 				if (contents.isEmpty()) {
 					try {
 						idleCount++;
@@ -79,6 +82,12 @@ public class DefaultResourceLoader extends ResourceLoader {
 					}
 					if (contents.isEmpty()) {
 						workers.remove(worker);
+						if (workers.isEmpty()) {
+							// This may race slightly.  At worst, a dangling reference
+							// to this queue will cause us to fire up another thread
+							// which will expire shortly thereafter
+							removeQueue(key);
+						}
 						return null;
 					}
 				}
@@ -94,6 +103,8 @@ public class DefaultResourceLoader extends ResourceLoader {
 				contents.add(item);
 				if (idleCount==0 && workers.size()<maxWorkers) {
 					startOne();
+				} else {
+					Log.d(Constants.LOG_TAG, "Not starting worker for request: idle=" + idleCount + ", size=" + workers.size());
 				}
 				this.notify();
 			}
@@ -107,15 +118,15 @@ public class DefaultResourceLoader extends ResourceLoader {
 		
 		private void startOne() {
 			synchronized (this) {
-				idleCount++;
 				IOWorker worker=new IOWorker(this, key + '-' + (++workerNumber));
+				workers.add(worker);
 				worker.start();
 			}
 		}
 	}
 	
 	class IOWorker implements Runnable {
-		boolean firstTime;
+		boolean firstTime=true;
 		String name;
 		Thread runningThread;
 		IOQueue queue;
@@ -243,7 +254,16 @@ public class DefaultResourceLoader extends ResourceLoader {
 		request.dataHandler=dataHandler;
 		request.callback=callback;
 		request.uri=uri;
-		request.queue=getQueue("default");
+		
+		if ("http".equals(uri.getScheme())) {
+			// Start an http worker queue
+			String queueName=uri.getScheme() + ':' + uri.getAuthority();
+			request.queue=getQueue(queueName, DEFAULT_WORKERS_PER_QUEUE, DEFAULT_IDLE_LINGER);
+		} else {
+			// We maintain a default queue for non-http requests
+			// Only one thread as this is most likely file system access
+			request.queue=getQueue("default", 1, DEFAULT_IDLE_LINGER);
+		}
 		request.queue.add(request);
 		
 		return request;
