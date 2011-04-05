@@ -33,14 +33,11 @@ public class UriTileSelector extends CartesianTileSelector {
 	}
 	
 	@Override
-	public Tile resolve(TileKey key, TileSet current) {
+	public Tile resolve(TileKey key) {
 		CharSequence uri=pattern.uriFor(key);
 		BitmapTile tile=new BitmapTile(key);
-		tile.initializeFrom(current);
-		if (tile.getState()!=Tile.STATE_LOADED) {
-			// Load it
-			tile.load(loader, uri);
-		}
+		// Load it
+		tile.load(loader, uri);
 		return tile;
 	}
 	

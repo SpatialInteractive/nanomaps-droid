@@ -3,7 +3,6 @@ package net.rcode.nanomaps;
 import java.io.InputStream;
 
 import net.rcode.nanomaps.io.ResourceLoader;
-
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -41,14 +40,8 @@ public class BitmapTile extends Tile {
 		}
 	}
 	
-	/**
-	 * Attempt to assemble the tile from current material if possible.
-	 * This may take current tiles and build a preview.
-	 * @param current
-	 */
-	public void initializeFrom(TileSet current) {
-		return;
-	}
+	
+
 	
 	/**
 	 * Schedules this tile for loading from the given loader
@@ -76,4 +69,5 @@ public class BitmapTile extends Tile {
 				}
 			});
 	}
+
 }

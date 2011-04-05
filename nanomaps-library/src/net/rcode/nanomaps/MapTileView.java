@@ -29,6 +29,7 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 
 	private TileSelector selector;
 	private TileSet currentTileSet=new TileSet();
+	private TileSet oldTileSet=new TileSet();
 	private ArrayList<TileKey> updatedKeys=new ArrayList<TileKey>(32);
 	private ArrayList<TileSet.Record> newTileRecords=new ArrayList<TileSet.Record>(32);
 	
@@ -52,10 +53,10 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 	@Override
 	public void mapStateUpdated(MapState mapState, boolean full) {
 		currentTileSet.resetMarks();
-		
 		int right=getWidth()-1, bottom=getHeight()-1;
 		
 		// Clear our shared state for a new run
+		boolean generatePreviews=full;
 		updatedKeys.clear();
 		newTileRecords.clear();
 		
@@ -85,8 +86,19 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 			mapTileToDisplay(mapState, key, record.displayRect);
 		}
 		
-		// Remove/destroy any tiles that were not visited
-		currentTileSet.sweep();
+		// If we are generating previews, then we need to sweep
+		// no longer used tiles into the oldTileSet and update their
+		// display metrics so that the new tiles can use them for
+		// previews
+		if (generatePreviews && !newTileRecords.isEmpty()) {
+			currentTileSet.sweepInto(oldTileSet);
+			for (TileSet.Record record: oldTileSet.records()) {
+				mapTileToDisplay(mapState, record.key, record.displayRect);
+			}
+		} else {
+			// Just sweep
+			currentTileSet.sweep();
+		}
 		
 		// newTileRecords now contains all records that have been newly allocated.
 		// We initialize them here in this ass-backwards way because we want to sort
@@ -96,15 +108,23 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 		sortTileSetRecords(newTileRecords);
 		for (int i=0; i<newTileRecords.size(); i++) {
 			TileSet.Record record=newTileRecords.get(i);
-			record.tile=selector.resolve(record.key, currentTileSet);
+			if (generatePreviews) {
+				record.tile=selector.resolveWithPreview(record.key, record.displayRect, oldTileSet);
+			} else {
+				record.tile=selector.resolve(record.key);
+			}
 			if (record.tile.getState()!=Tile.STATE_LOADED) {
 				record.tile.setStateChangedListener(MapTileView.this);
 			}
 		}
+
+		// Remove/destroy any tiles that were not visited
+		// Important that this comes after adding new since we generate
+		// previews from old tiles
+		currentTileSet.sweep();
+		oldTileSet.clear();
 		
-		//if (handler.needsRedraw) {
 		invalidate();
-		//}
 	}
 	
 	private class TileCentroidComparator implements Comparator<TileSet.Record> {

@@ -24,7 +24,6 @@ import org.apache.http.message.BasicLineFormatter;
 import org.apache.http.message.BasicLineParser;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
-import org.apache.http.util.EntityUtils;
 
 import android.util.Log;
 

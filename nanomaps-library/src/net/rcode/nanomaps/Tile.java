@@ -44,12 +44,21 @@ public class Tile {
 		return drawable;
 	}
 	
+	public void setPreview(Drawable drawable) {
+		if (state!=STATE_LOADED) {
+			updateContent(drawable, STATE_PREVIEW);
+		}
+	}
+	
 	/**
 	 * Update the tile's content with the given drawable and state
 	 * @param drawable
 	 * @param state
 	 */
 	public void updateContent(Drawable drawable, int state) {
+		//TEMP - uncomment to preserve preview images for debugging
+		//if (this.drawable!=null) return;
+		
 		this.drawable=drawable;
 		this.state=state;
 		if (stateChangedListener!=null)

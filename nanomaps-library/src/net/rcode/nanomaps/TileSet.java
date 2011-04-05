@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import android.graphics.Rect;
-import android.util.Log;
 
 /**
  * Represents a set of active tiles identified by TileKey instances.
@@ -92,21 +91,33 @@ public class TileSet {
 	 * Remove and destroy all unmarked tiles
 	 */
 	public final void sweep() {
-		int keepCount=0, removeCount=0;
-		
 		Iterator<Record> iter=contents.values().iterator();
 		while (iter.hasNext()) {
 			Record record=iter.next();
 			if (!record.marked) {
 				iter.remove();
 				if (record.tile!=null) record.tile.destroy();
-				removeCount++;
-			} else {
-				keepCount++;
 			}
 		}
-		
-		Log.d(Constants.LOG_TAG, "Sweep TileSet.  Keep=" + keepCount + ", Remove=" + removeCount);
+	}
+	
+	/**
+	 * Remove all unmarked tiles from this TileSet and add them to dest.
+	 * Tiles are not destroyed.
+	 * @param dest
+	 */
+	public final void sweepInto(TileSet dest) {
+		Iterator<Record> iter=contents.values().iterator();
+		while (iter.hasNext()) {
+			Record record=iter.next();
+			if (!record.marked) {
+				iter.remove();
+				Record old=dest.contents.put(record.key, record);
+				if (old!=null && old.tile!=null) {
+					old.tile.destroy();
+				}
+			}
+		}
 	}
 	
 	/**
