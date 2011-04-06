@@ -1,5 +1,6 @@
 package net.rcode.nanomaps.sample;
 
+import net.rcode.nanomaps.Coordinate;
 import net.rcode.nanomaps.MapState;
 import net.rcode.nanomaps.MapSurface;
 import net.rcode.nanomaps.sample.widgets.MapControls;
@@ -25,12 +26,7 @@ public class SampleActivity extends Activity {
         
         final MapSurface map=new MapSurface(this);
         rl.addView(map, new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-        
-        MapState ms=map.getMapState();
-        ms.lock();
-        ms.setLevel(14, 0, 0);
-        ms.setCenterLatLng(47.626967, -122.315352);
-        ms.unlock();
+        map.setMapLocationZoom(Coordinate.latLng(47.626967, -122.315352), 14);
         
         MapTileView mtv=new MapTileView(this, new UriTileSelector("http://otile${modulo:1}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"));
         //MapTileView mtv=new MapTileView(this, new UriTileSelector("http://h0.ortho.tiles.virtualearth.net/tiles/h${quadkey}.jpeg?g=131"));
@@ -56,7 +52,7 @@ public class SampleActivity extends Activity {
         btn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				map.mapPanZoom(47.720232, -122.313698, 16);
+		        map.transitionMapLocationZoom(Coordinate.latLng(47.720232, -122.313698), 16);
 			}
 		});
         topBar.addView(btn);
@@ -66,7 +62,7 @@ public class SampleActivity extends Activity {
         btn.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				map.mapPanZoom(47.628393, -122.521563, 12);
+		        map.transitionMapLocationZoom(Coordinate.latLng(47.628393, -122.521563), 12);
 			}
 		});
         topBar.addView(btn);

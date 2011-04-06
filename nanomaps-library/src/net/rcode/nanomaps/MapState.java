@@ -346,35 +346,6 @@ public class MapState {
 		setViewportProjected(projection.forwardX(globalX), projection.forwardY(globalY), x, y);
 	}
 	
-	/**
-	 * Convenience to set the viewport in lat/lng coordinates.  Equivilent to
-	 * setViewportGlobal(lng, lat, x, y);
-	 * @param lat
-	 * @param lng
-	 * @param x
-	 * @param y
-	 */
-	public void setViewportLatLng(double lat, double lng, int x, int y) {
-		setViewportGlobal(lng, lat, x, y);
-	}
-	
-	/**
-	 * Convenience to set the center in global coordinates
-	 * @param globalX
-	 * @param globalY
-	 */
-	public void setCenterGlobal(double globalX, double globalY) {
-		setViewportGlobal(globalX, globalY, viewportWidth/2, viewportHeight/2);
-	}
-	
-	/**
-	 * Convenience to set the center in lat/lng
-	 * @param lat
-	 * @param lng
-	 */
-	public void setCenterLatLng(double lat, double lng) {
-		setViewportGlobal(lng, lat, viewportWidth/2, viewportHeight/2);
-	}
 	
 	@Override
 	public String toString() {

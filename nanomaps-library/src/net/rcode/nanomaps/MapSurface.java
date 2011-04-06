@@ -209,47 +209,211 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	}
 	
 	/**
-	 * Zooms the map to an zoom level at an arbitrary location
-	 * @param toLevel
-	 * @param x
-	 * @param y
-	 * @param noanimate
+	 * @return A new linear transition
 	 */
-	public void mapZoom(double toLevel, int x, int y, boolean noanimate) {
-		LinearTransition t=new LinearTransition(getMapState());
-		if (toLevel<getMapMinLevel()) toLevel=getMapMinLevel();
-		else if (toLevel>getMapMaxLevel()) toLevel=getMapMaxLevel();
-		
-		t.getFinalMapState().setLevel(toLevel, x, y);
-		
-		if (noanimate) {
-			transitionController.doImmediately(t);
-		} else {
-			transitionController.start(t, 250);
-		}
+	public LinearTransition createTransition() {
+		return new LinearTransition(mapState);
 	}
 	
 	/**
-	 * Zooms the map to an absolute zoom level at the center
-	 * @param levelDelta
-	 * @param noanimate
+	 * If a map transition animation is in progress, finish it, jumping
+	 * directly to the final state.
 	 */
-	public void mapZoom(double toLevel, boolean noanimate) {
-		mapZoom(toLevel, getWidth()/2, getHeight()/2, noanimate);
+	public void finishMapTransition() {
+		transitionController.finish();
 	}
 	
-	public void mapPanZoom(double lat, double lng, int toLevel) {
-		mapPanZoom(lat, lng, toLevel, getWidth()/2, getHeight()/2);
-	}
-	
-	public void mapPanZoom(double lat, double lng, int toLevel, int x, int y) {
-		LinearTransition t=new LinearTransition(getMapState());
-		if (toLevel<getMapMinLevel()) toLevel=getMapMinLevel();
-		else if (toLevel>getMapMaxLevel()) toLevel=getMapMaxLevel();
+	/**
+	 * Clamp the given level to allowable min/max.
+	 * @param level
+	 * @return clamped zoom level
+	 */
+	public double clampMapZoom(double level) {
+		double max=getMapMaxLevel();
+		double min=getMapMinLevel();
+		// Not much to do here - but letting an NaN in is like inviting
+		// a vampire into your house
+		if (Double.isNaN(level)) return max;
 		
-		t.getFinalMapState().setLevel(toLevel, x, y);
-		t.getFinalMapState().setViewportLatLng(lat, lng, x, y);
+		if (level<min) return min;
+		if (level>max) return max;
+		return level;
+	}
+	
+	/**
+	 * @return current map zoom level
+	 */
+	public double getMapZoom() {
+		return mapState.getLevel();
+	}
+	
+	/**
+	 * Set the map zoom level relative to an arbitrary position
+	 * @param level (clamped to bounds)
+	 */
+	public void setMapZoom(double level, int x, int y) {
+		transitionController.finish();
+		mapState.setLevel(clampMapZoom(level), x, y);
+	}
+
+	/**
+	 * Set the map zoom level relative to an the map center
+	 * @param level (clamped to bounds)
+	 */
+	public final void setMapZoom(double level) {
+		setMapZoom(level, getWidth()/2, getHeight()/2);
+	}
+
+	/**
+	 * Set the map zoom via a transition at an arbitrary point.  
+	 * Based on policy, the transition may be an animation or
+	 * just a jump 
+	 * @param toLevel
+	 * @param x
+	 * @param y
+	 * @return true if animating, false if jump
+	 */
+	public boolean transitionMapZoom(double toLevel, int x, int y) {
+		LinearTransition t=new LinearTransition(getMapState());
+		t.getFinalMapState().setLevel(clampMapZoom(toLevel), x, y);
+		transitionController.start(t, 250);
+		return true;
+	}
+	
+	/**
+	 * Set the map zoom via a transition at map center.  
+	 * Based on policy, the transition may be an animation or
+	 * just a jump 
+	 * @param toLevel
+	 * @param x
+	 * @param y
+	 * @return true if animating, false if jump
+	 */
+	public boolean transitionMapZoom(double toLevel) {
+		return transitionMapZoom(toLevel, getWidth()/2, getHeight()/2);
+	}	
+
+	/**
+	 * Get the current map location in global coordinates at an
+	 * arbitrary point on the viewport
+	 * @param x
+	 * @param y
+	 * @return coordinates
+	 */
+	public Coordinate getMapLocation(int x, int y) {
+		double gx=mapState.getViewportGlobalX(x, y);
+		double gy=mapState.getViewportDisplayY(x, y);
+		return Coordinate.xy(gx, gy);
+	}
+	
+	/**
+	 * Get the current map location in global coordinates at the center
+	 * @return coordinates
+	 */
+	public Coordinate getMapLocation() {
+		return getMapLocation(getWidth()/2, getHeight()/2);
+	}
+	
+	/**
+	 * Set the map location for an arbitrary pixel coordinate in
+	 * the viewport.
+	 * @param global
+	 * @param x
+	 * @param y
+	 */
+	public void setMapLocation(Coordinate global, int x, int y) {
+		transitionController.finish();
+		mapState.setViewportGlobal(global.getX(), global.getY(), x, y);
+	}
+	
+	/**
+	 * Set the map location at the center
+	 * @param global
+	 */
+	public final void setMapLocation(Coordinate global) {
+		setMapLocation(global, getWidth()/2, getHeight()/2);
+	}
+	
+	/**
+	 * Transition the map to a new location relative to arbitrary viewport
+	 * coordinates.
+	 * @param global
+	 * @param x
+	 * @param y
+	 * @return true if transitioned, false if jumped
+	 */
+	public boolean transitionMapLocation(Coordinate global, int x, int y) {
+		LinearTransition t=new LinearTransition(getMapState());
+		t.getFinalMapState().setViewportGlobal(global.getX(), global.getY(), x, y);
+		transitionController.start(t, 1000);
+		return true;
+	}
+	
+	/**
+	 * Transition the map to a new location relative to the map center
+	 * 
+	 * @param global
+	 * @return true if transitioned, false if jumped
+	 */
+	public final boolean transitionMapLocation(Coordinate global) {
+		return transitionMapLocation(global, getWidth()/2, getHeight()/2);
+	}
+	
+	/**
+	 * Sets the map location and zoom in one operation at an arbitrary coordinate.
+	 * @param global
+	 * @param level
+	 * @param x
+	 * @param y
+	 */
+	public void setMapLocationZoom(Coordinate global, double level, int x, int y) {
+		transitionController.finish();
+		mapState.lock();
+		mapState.setLevel(clampMapZoom(level), x, y);
+		mapState.setViewportGlobal(global.getX(), global.getY(), x, y);
+		mapState.unlock();
+	}
+	
+	/**
+	 * Sets the map location and zoom in one operation at map center.
+	 * @param global
+	 * @param level
+	 */
+	public final void setMapLocationZoom(Coordinate global, double level) {
+		setMapLocationZoom(global, level, getWidth()/2, getHeight()/2);
+	}
+
+	/**
+	 * Transition the map to an arbitrary new location and zoom level relative
+	 * to arbitrary coordinates on the viewport.
+	 * @param global
+	 * @param level
+	 * @param x
+	 * @param y
+	 * @return true if transitioning, false if jump
+	 */
+	public boolean transitionMapLocationZoom(Coordinate global, double level, int x, int y) {
+		LinearTransition t=new LinearTransition(getMapState());
+		
+		t.getFinalMapState().setLevel(clampMapZoom(level), x, y);
+		t.getFinalMapState().setViewportGlobal(global.getX(), global.getY(), x, y);
 		
 		transitionController.start(t, 1000);
+		return true;
 	}
+
+
+	/**
+	 * Transition the map to an arbitrary new location and zoom level relative
+	 * to the map center
+	 * @param global
+	 * @param level
+	 * @param x
+	 * @param y
+	 * @return true if transitioning, false if jump
+	 */
+	public final boolean transitionMapLocationZoom(Coordinate global, int level) {
+		return transitionMapLocationZoom(global, level, getWidth()/2, getHeight()/2);
+	}
+	
 }

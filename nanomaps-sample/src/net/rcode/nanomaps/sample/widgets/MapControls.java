@@ -46,7 +46,7 @@ public class MapControls {
 					Log.d("nanomaps", "Zoom In");
 					double current=map.getMapState().getLevel();
 					double next=Math.floor(current)+1;
-					map.mapZoom(next, false);
+					map.transitionMapZoom(next);
 				}
 			});
 		}
@@ -60,7 +60,7 @@ public class MapControls {
 					Log.d("nanomaps", "Zoom Out");
 					double current=map.getMapState().getLevel();
 					double next=Math.ceil(current)-1;
-					map.mapZoom(next, false);
+					map.transitionMapZoom(next);
 				}
 			});
 		}
