@@ -236,4 +236,19 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	public void mapZoom(double toLevel, boolean noanimate) {
 		mapZoom(toLevel, getWidth()/2, getHeight()/2, noanimate);
 	}
+	
+	public void mapPanZoom(double lat, double lng, int toLevel) {
+		mapPanZoom(lat, lng, toLevel, getWidth()/2, getHeight()/2);
+	}
+	
+	public void mapPanZoom(double lat, double lng, int toLevel, int x, int y) {
+		LinearTransition t=new LinearTransition(getMapState());
+		if (toLevel<getMapMinLevel()) toLevel=getMapMinLevel();
+		else if (toLevel>getMapMaxLevel()) toLevel=getMapMaxLevel();
+		
+		t.getFinalMapState().setLevel(toLevel, x, y);
+		t.getFinalMapState().setViewportLatLng(lat, lng, x, y);
+		
+		transitionController.start(t, 1000);
+	}
 }

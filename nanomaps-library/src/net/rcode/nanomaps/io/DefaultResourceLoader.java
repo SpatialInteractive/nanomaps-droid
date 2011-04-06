@@ -32,7 +32,7 @@ public class DefaultResourceLoader extends ResourceLoader {
 	}
 	
 	static final int DEFAULT_PIPELINE_DEPTH=7;
-	static final int DEFAULT_WORKERS_PER_QUEUE=2;
+	static final int DEFAULT_WORKERS_PER_QUEUE=3;
 	static final int DEFAULT_IDLE_LINGER=30000;
 	
 	Map<String, IOQueue> queues=new HashMap<String, IOQueue>();
