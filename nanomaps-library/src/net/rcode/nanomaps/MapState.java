@@ -78,13 +78,59 @@ public class MapState {
 				0, 0);
 	}
 	
+	/**
+	 * Copy constructor.  Does nothing.
+	 */
+	protected MapState() {
+	}
+	
+	/**
+	 * Copies the current mapstate into a new detached instance
+	 * @return
+	 */
+	public MapState dup() {
+		MapState ret=new MapState();
+		ret.projection=projection;
+		ret.resolution=resolution;
+		ret.viewportHeight=viewportHeight;
+		ret.viewportWidth=viewportWidth;
+		ret.viewportOriginX=viewportOriginX;
+		ret.viewportOriginY=viewportOriginY;
+		return ret;
+	}
+	
+	/**
+	 * Copy all mutable parameters from this mapstate to the target.
+	 * If anything changed, calls update.
+	 * @param target
+	 */
+	public void copy(MapState target) {
+		boolean changed=(
+				target.viewportOriginX!=viewportOriginX ||
+				target.viewportOriginY!=viewportOriginY ||
+				target.resolution!=resolution ||
+				target.viewportHeight!=viewportHeight ||
+				target.viewportWidth!=viewportWidth
+				);
+		target.resolution=resolution;
+		target.viewportHeight=viewportHeight;
+		target.viewportWidth=viewportWidth;
+		target.viewportOriginX=viewportOriginX;
+		target.viewportOriginY=viewportOriginY;
+		
+		if (changed) {
+			target._updated(true);
+		}
+	}
+	
 	private void _updated(boolean fullUpdate) {
 		if (lockCount>0) {
 			lockUpdated=true;
 			if (fullUpdate) lockUpdatedFull=true;
 			return;
+		} else {
+			if (listener!=null) listener.mapStateUpdated(this, fullUpdate);
 		}
-		if (listener!=null) listener.mapStateUpdated(this, fullUpdate);
 	}
 	
 	void setListener(MapStateAware listener) {
@@ -326,5 +372,10 @@ public class MapState {
 	 */
 	public void setCenterLatLng(double lat, double lng) {
 		setViewportGlobal(lng, lat, viewportWidth/2, viewportHeight/2);
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("MapState(res=%s,x=%s,y=%s)", resolution, viewportOriginX, viewportOriginY);
 	}
 }

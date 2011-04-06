@@ -1,5 +1,7 @@
 package net.rcode.nanomaps;
 
+import net.rcode.nanomaps.transitions.LinearTransition;
+import net.rcode.nanomaps.transitions.TransitionController;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -17,6 +19,7 @@ import android.widget.RelativeLayout;
  *
  */
 public class MapSurface extends RelativeLayout implements MapStateAware {
+	private TransitionController transitionController;
 	static final boolean DEBUG=true;
 	MapState mapState;
 	MapContentView backgroundLayer;
@@ -24,6 +27,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	
 	public MapSurface(Context context) {
 		super(context);
+		transitionController=new TransitionController();
 		mapState=new MapState(WebMercatorProjection.DEFAULT);
 		mapState.setListener(this);
 		setBackgroundColor(Color.GRAY);
@@ -39,6 +43,10 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 		return mcv;
 	}
 
+	public TransitionController getTransitionController() {
+		return transitionController;
+	}
+	
 	private LayoutParams createFillLayoutParams() {
 		LayoutParams lp=new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
 		lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -199,4 +207,33 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 		return mapState.getProjection().getMinLevel();
 	}
 	
+	/**
+	 * Zooms the map to an zoom level at an arbitrary location
+	 * @param toLevel
+	 * @param x
+	 * @param y
+	 * @param noanimate
+	 */
+	public void mapZoom(double toLevel, int x, int y, boolean noanimate) {
+		LinearTransition t=new LinearTransition(getMapState());
+		if (toLevel<getMapMinLevel()) toLevel=getMapMinLevel();
+		else if (toLevel>getMapMaxLevel()) toLevel=getMapMaxLevel();
+		
+		t.getFinalMapState().setLevel(toLevel, x, y);
+		
+		if (noanimate) {
+			transitionController.doImmediately(t);
+		} else {
+			transitionController.start(t, 250);
+		}
+	}
+	
+	/**
+	 * Zooms the map to an absolute zoom level at the center
+	 * @param levelDelta
+	 * @param noanimate
+	 */
+	public void mapZoom(double toLevel, boolean noanimate) {
+		mapZoom(toLevel, getWidth()/2, getHeight()/2, noanimate);
+	}
 }

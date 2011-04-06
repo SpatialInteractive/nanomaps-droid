@@ -107,7 +107,7 @@ public class DefaultResourceLoader extends ResourceLoader {
 		 */
 		public IORequest next(IOWorker worker, boolean noblock) {
 			synchronized (this) {
-				Log.d(Constants.LOG_TAG, "Read next from queue of " + contents.size());
+				//Log.d(Constants.LOG_TAG, "Read next from queue of " + contents.size());
 				if (noblock) {
 					if (contents.isEmpty()) return null;
 					return contents.removeFirst();
@@ -253,7 +253,7 @@ public class DefaultResourceLoader extends ResourceLoader {
 				queueDirect(request, true);
 			}
 			
-			Log.d(Constants.LOG_TAG, "Flushed " + agent.getPendingCount() + " to agent.");
+			//Log.d(Constants.LOG_TAG, "Flushed " + agent.getPendingCount() + " to agent.");
 			return ret;
 		}
 		
@@ -323,7 +323,7 @@ public class DefaultResourceLoader extends ResourceLoader {
 			
 			// Process it the old fashioned way
 			long time=SystemClock.uptimeMillis();
-			Log.d(Constants.LOG_TAG, name + " Requesting " + request.uri);
+			//Log.d(Constants.LOG_TAG, name + " Requesting " + request.uri);
 			
 			URL url=new URL(uri.toString());
 			InputStream input=url.openStream();

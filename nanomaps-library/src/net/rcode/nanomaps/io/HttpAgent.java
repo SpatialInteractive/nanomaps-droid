@@ -159,7 +159,7 @@ public class HttpAgent {
 				shutdown();
 				return;
 			} else {
-				Log.d(Constants.LOG_TAG, "Persisting connection to next request");
+				//Log.d(Constants.LOG_TAG, "Persisting connection to next request");
 				
 			}
 		}

@@ -1,5 +1,7 @@
 package net.rcode.nanomaps;
 
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 
 /**
@@ -25,6 +27,7 @@ public class Tile {
 	private int state;
 	private Drawable drawable;
 	private StateChangedListener stateChangedListener;
+	private boolean temporary;
 	
 	public Tile(TileKey key) {
 		this.key=key;
@@ -35,6 +38,13 @@ public class Tile {
 	 */
 	public final TileKey getKey() {
 		return key;
+	}
+	
+	public void setTemporary(boolean temporary) {
+		this.temporary = temporary;
+	}
+	public boolean isTemporary() {
+		return temporary;
 	}
 	
 	/**
@@ -100,4 +110,50 @@ public class Tile {
 	public String toString() {
 		return key.toString();
 	}
+	
+	public void generatePreview(Rect displayRect, TileSet previewMaterial) {
+		if (drawable==null) {
+			Drawable p=generatePreview(key, displayRect, previewMaterial);
+			if (p!=null) updateContent(p, STATE_PREVIEW);
+		}
+	}
+	
+	/**
+	 * Attempt to assemble the tile from current material if possible.
+	 * This may take current tiles and build a preview.
+	 * @param displayRect the space that this tile occupies in the previewMaterial TileSet
+	 * @param previewMaterial existing tiles
+	 */
+	protected static Drawable generatePreview(TileKey key, Rect displayRect, TileSet previewMaterial) {
+		CompositeDrawable preview=null;
+		
+		int nativeSize=key.getSize();
+		
+		// The display area may be displaying a non-native scale
+		// but we need to populate our preview with native scaled data
+		float sx=(float)nativeSize / displayRect.width();
+		float sy=(float)nativeSize / displayRect.height();
+		
+		for (TileSet.Record record: previewMaterial.records()) {
+			if (record.displayRect==null || record.tile==null) continue;
+			if (!Rect.intersects(displayRect, record.displayRect)) continue;
+			
+			Drawable source=record.tile.getDrawable();
+			if (source==null) continue;
+			if (preview==null) preview=new CompositeDrawable(nativeSize, nativeSize);
+			
+			RectF childBounds=new RectF(record.displayRect);
+			childBounds.offset(-displayRect.left, -displayRect.top);
+			
+			// Scale the child back to our native size
+			childBounds.left*=sx;
+			childBounds.right*=sx;
+			childBounds.top*=sy;
+			childBounds.bottom*=sy;
+			
+			preview.addChild(childBounds, source);
+		}
+		
+		return preview;
+	}	
 }

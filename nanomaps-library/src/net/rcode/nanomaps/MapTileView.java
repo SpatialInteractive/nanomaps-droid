@@ -5,13 +5,13 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import net.rcode.nanomaps.TileSet.Record;
-
+import net.rcode.nanomaps.transitions.Transition;
+import net.rcode.nanomaps.transitions.TransitionController;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.View;
 
 /**
@@ -21,7 +21,7 @@ import android.view.View;
  * @author stella
  *
  */
-public class MapTileView extends View implements MapStateAware, Tile.StateChangedListener {
+public class MapTileView extends View implements MapStateAware, Tile.StateChangedListener, Transition.Callback {
 	static final Paint CLEAR_PAINT=new Paint();
 	static {
 		CLEAR_PAINT.setARGB(0, 0, 0, 0);
@@ -29,9 +29,12 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 
 	private TileSelector selector;
 	private TileSet currentTileSet=new TileSet();
+	private TileSet transitionTileSet=new TileSet();
+	private boolean transitionLocked=false;
 	private TileSet oldTileSet=new TileSet();
 	private ArrayList<TileKey> updatedKeys=new ArrayList<TileKey>(32);
 	private ArrayList<TileSet.Record> newTileRecords=new ArrayList<TileSet.Record>(32);
+	private TransitionController transitionController;
 	
 	public MapTileView(Context context, TileSelector selector) {
 		super(context);
@@ -50,13 +53,77 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 		return getContentView().getMapState();
 	}
 	
+	public TransitionController getTransitionController() {
+		if (transitionController==null) {
+			transitionController=getContentView().getMapSurface().getTransitionController();
+		}
+		return transitionController;
+	}
+	
+	@Override
+	public void onTransitionComplete(Transition t) {
+		// If we are transition locked, unlock it, do an update
+		// and clear any unused tiles
+		if (transitionLocked) {
+			transitionLocked=false;
+			currentTileSet.removeTemporary();
+			mapStateUpdated(t.getActiveMapState(), true);
+			transitionTileSet.clear();
+		}
+	}
+	
+	/**
+	 * At the beginning of a transition, preloads tiles into transitionTileSet
+	 * from the final MapState.
+	 * @param mapState
+	 */
+	protected void loadPendingTiles(MapState mapState) {
+		int right=getWidth()-1, bottom=getHeight()-1;
+
+		// Select tile keys that intersect our display area
+		updatedKeys.clear();
+		newTileRecords.clear();
+		selector.select(mapState.getProjection(),
+				mapState.getResolution(),
+				mapState.getViewportProjectedX(0, 0),
+				mapState.getViewportProjectedY(0, 0),
+				mapState.getViewportProjectedX(right, bottom),
+				mapState.getViewportProjectedY(right, bottom),
+				updatedKeys);
+		
+		for (int i=0; i<updatedKeys.size(); i++) {
+			TileKey key=updatedKeys.get(i);
+			TileSet.Record record=transitionTileSet.get(key);
+			if (record==null) {
+				record=transitionTileSet.create(key);
+				newTileRecords.add(record);
+				mapTileToDisplay(mapState, key, record.displayRect);				
+			}
+		}
+		
+		sortTileSetRecords(newTileRecords);
+		for (int i=0; i<newTileRecords.size(); i++) {
+			TileSet.Record record=newTileRecords.get(i);
+			if (record.tile==null) record.tile=selector.resolve(record.key);
+		}		
+	}
+	
 	@Override
 	public void mapStateUpdated(MapState mapState, boolean full) {
+		TransitionController tc=getTransitionController();
+		if (!transitionLocked && tc.isTransitionActive()) {
+			// Prime pending tiles and lock transition
+			Transition transition=tc.getActiveTransition();
+			loadPendingTiles(transition.getFinalMapState());
+			transition.addCallback(this);
+			transitionLocked=true;
+		}
+
 		currentTileSet.resetMarks();
 		int right=getWidth()-1, bottom=getHeight()-1;
 		
 		// Clear our shared state for a new run
-		boolean generatePreviews=full;
+		boolean generatePreviews=true;
 		updatedKeys.clear();
 		newTileRecords.clear();
 		
@@ -74,11 +141,20 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 			TileKey key=updatedKeys.get(i);
 			TileSet.Record record=currentTileSet.get(key);
 			if (record==null) {
-				record=currentTileSet.create(key);
-				record.displayRect=new Rect();
+				// If we're in transition, then go look in the pendingTileSet.
+				if (transitionLocked) {
+					record=transitionTileSet.get(key);
+					if (record!=null) {
+						transitionTileSet.move(record, currentTileSet);
+					} else {
+						// Just make one
+						record=currentTileSet.create(key);
+					}
+				} else {
+					// Just create the record
+					record=currentTileSet.create(key);
+				}
 				newTileRecords.add(record);
-			} else {
-				Log.d(Constants.LOG_TAG, "Recycling tile from TileSet: " + key);
 			}
 			record.marked=true;
 			
@@ -95,9 +171,6 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 			for (TileSet.Record record: oldTileSet.records()) {
 				mapTileToDisplay(mapState, record.key, record.displayRect);
 			}
-		} else {
-			// Just sweep
-			currentTileSet.sweep();
 		}
 		
 		// newTileRecords now contains all records that have been newly allocated.
@@ -108,11 +181,22 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 		sortTileSetRecords(newTileRecords);
 		for (int i=0; i<newTileRecords.size(); i++) {
 			TileSet.Record record=newTileRecords.get(i);
-			if (generatePreviews) {
-				record.tile=selector.resolveWithPreview(record.key, record.displayRect, oldTileSet);
-			} else {
-				record.tile=selector.resolve(record.key);
+			
+			if (record.tile==null) {
+				// Initialize the tile.  When in transitionLocked, only create
+				// temporary tiles (we don't want to do extra IO loading stuff that's going away)
+				if (transitionLocked) {
+					record.tile=new Tile(record.key);
+					record.tile.setTemporary(true);
+				}
+				else record.tile=selector.resolve(record.key);
 			}
+			
+			// If there is no image, give it a chance to create a preview
+			if (record.tile.getDrawable()==null) {
+				record.tile.generatePreview(record.displayRect, oldTileSet);
+			}
+			
 			if (record.tile.getState()!=Tile.STATE_LOADED) {
 				record.tile.setStateChangedListener(MapTileView.this);
 			}
@@ -177,7 +261,7 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 		
 		for (TileSet.Record record: currentTileSet.records()) {
 			if (Rect.intersects(clip, record.displayRect)) {
-				Log.d(Constants.LOG_TAG, "DRAW TILE: " + record.tile);
+				//Log.d(Constants.LOG_TAG, "DRAW TILE: " + record.tile);
 				Drawable drawable=record.tile.getDrawable();
 				if (drawable!=null) {
 					// Draw it
@@ -185,7 +269,7 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 					drawable.draw(canvas);
 				} else {
 					// Clear the area
-					Log.d(Constants.LOG_TAG, "Clearing " + record.displayRect);
+					//Log.d(Constants.LOG_TAG, "Clearing " + record.displayRect);
 					canvas.drawRect(record.displayRect, CLEAR_PAINT);
 				}
 			}
@@ -194,7 +278,7 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 
 	@Override
 	public void tileStateChanged(Tile tile) {
-		Log.d(Constants.LOG_TAG, "Tile state changed: " + tile.getState());
+		//Log.d(Constants.LOG_TAG, "Tile state changed: " + tile.getState());
 		
 		// If it is still in the current set, invalidate its bounds
 		TileSet.Record record=currentTileSet.get(tile.getKey());

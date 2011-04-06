@@ -45,10 +45,8 @@ public class MapControls {
 				public void onClick(View v) {
 					Log.d("nanomaps", "Zoom In");
 					double current=map.getMapState().getLevel();
-					int max=map.getMapMaxLevel();
 					double next=Math.floor(current)+1;
-					if (next>max) next=max;
-					map.getMapState().setLevel(next, map.getWidth()/2, map.getHeight()/2);
+					map.mapZoom(next, false);
 				}
 			});
 		}
@@ -61,10 +59,8 @@ public class MapControls {
 				public void onClick(View v) {
 					Log.d("nanomaps", "Zoom Out");
 					double current=map.getMapState().getLevel();
-					int min=map.getMapMinLevel();
 					double next=Math.ceil(current)-1;
-					if (next<min) next=min;
-					map.getMapState().setLevel(next, map.getWidth()/2, map.getHeight()/2);
+					map.mapZoom(next, false);
 				}
 			});
 		}

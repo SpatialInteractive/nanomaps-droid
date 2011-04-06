@@ -56,11 +56,25 @@ public class TileSet {
 	public final Record create(TileKey tk) {
 		Record current=new Record();
 		current.key=tk;
+		current.displayRect=new Rect();
 		Record prev=contents.put(tk, current);
 		if (prev!=null && prev.tile!=null) {
 			prev.tile.destroy();
 		}
 		return current;
+	}
+	
+	public final void move(Record record, TileSet dest) {
+		dest.remove(record.key);
+		dest.contents.put(record.key, record);
+		contents.remove(record.key);
+	}
+	
+	public final void remove(TileKey key) {
+		Record r=contents.get(key);
+		if (r!=null && r.tile!=null) {
+			r.tile.destroy();
+		}
 	}
 	
 	/**
@@ -128,5 +142,16 @@ public class TileSet {
 			if (record.tile!=null) record.tile.destroy();
 		}
 		contents.clear();
+	}
+
+	public void removeTemporary() {
+		Iterator<Record> iter=contents.values().iterator();
+		while (iter.hasNext()) {
+			Record record=iter.next();
+			if (record.tile!=null && record.tile.isTemporary()) {
+				iter.remove();
+				record.tile.destroy();
+			}
+		}
 	}
 }
