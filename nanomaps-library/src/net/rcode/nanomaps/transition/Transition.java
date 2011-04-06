@@ -1,4 +1,4 @@
-package net.rcode.nanomaps.transitions;
+package net.rcode.nanomaps.transition;
 
 import java.util.ArrayList;
 import java.util.List;

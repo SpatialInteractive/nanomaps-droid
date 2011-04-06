@@ -1,5 +1,7 @@
 package net.rcode.nanomaps;
 
+import net.rcode.nanomaps.util.DoubleBounds;
+
 /**
  * Represents physical state of the map.
  * <p>
@@ -72,7 +74,7 @@ public class MapState {
 		this.projection=projection;
 		this.resolution=projection.fromLevel(projection.getMinLevel());
 		
-		Bounds extent=projection.getProjectedExtent();
+		DoubleBounds extent=projection.getProjectedExtent();
 		setViewportProjected((extent.getMinx()+extent.getMaxx())/2, 
 				(extent.getMiny()+extent.getMaxy())/2,
 				0, 0);

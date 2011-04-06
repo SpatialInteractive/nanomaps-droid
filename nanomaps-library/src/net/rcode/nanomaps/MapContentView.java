@@ -1,5 +1,6 @@
 package net.rcode.nanomaps;
 
+import net.rcode.nanomaps.util.Constants;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;

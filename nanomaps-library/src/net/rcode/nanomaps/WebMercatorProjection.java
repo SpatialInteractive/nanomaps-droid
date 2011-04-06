@@ -1,5 +1,7 @@
 package net.rcode.nanomaps;
 
+import net.rcode.nanomaps.util.DoubleBounds;
+
 /**
  * Web mercator projection as used by Google, Microsoft, et al.
  * <p>
@@ -10,14 +12,14 @@ package net.rcode.nanomaps;
  *
  */
 public class WebMercatorProjection implements Projection {
-	private static Bounds GLOBAL_EXTENT=new Bounds(
+	private static DoubleBounds GLOBAL_EXTENT=new DoubleBounds(
 			-180.0, -85.05112878, 180.0, 85.05112878
 			);
-	private static Bounds PROJECTED_EXTENT;
+	private static DoubleBounds PROJECTED_EXTENT;
 	public static WebMercatorProjection DEFAULT=new WebMercatorProjection();
 	
 	static {
-		PROJECTED_EXTENT=new Bounds(
+		PROJECTED_EXTENT=new DoubleBounds(
 				DEFAULT.forwardX(GLOBAL_EXTENT.getMinx()),
 				DEFAULT.forwardY(GLOBAL_EXTENT.getMiny()),
 				DEFAULT.forwardX(GLOBAL_EXTENT.getMaxx()),
@@ -98,12 +100,12 @@ public class WebMercatorProjection implements Projection {
 	}
 	
 	@Override
-	public Bounds getGlobalExtent() {
+	public DoubleBounds getGlobalExtent() {
 		return GLOBAL_EXTENT;
 	}
 	
 	@Override
-	public Bounds getProjectedExtent() {
+	public DoubleBounds getProjectedExtent() {
 		return PROJECTED_EXTENT;
 	}
 }

@@ -1,4 +1,4 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
 /**
  * Represents a tile.  Derived classes will correctly implement

@@ -1,4 +1,4 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
 import net.rcode.nanomaps.io.DefaultResourceLoader;
 import net.rcode.nanomaps.io.ResourceLoader;

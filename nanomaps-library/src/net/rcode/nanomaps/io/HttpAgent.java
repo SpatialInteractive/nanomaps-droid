@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.LinkedList;
 
-import net.rcode.nanomaps.Constants;
+import net.rcode.nanomaps.util.Constants;
 
 import org.apache.http.Header;
 import org.apache.http.HttpException;

@@ -1,4 +1,4 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
 /**
  * Extends TileKey to represent tiles in an (x,y) grid per level.

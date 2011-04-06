@@ -1,4 +1,4 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.util;
 
 import java.util.ArrayList;
 

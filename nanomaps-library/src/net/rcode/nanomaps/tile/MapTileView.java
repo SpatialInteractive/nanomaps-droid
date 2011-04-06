@@ -1,12 +1,15 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-import net.rcode.nanomaps.TileSet.Record;
-import net.rcode.nanomaps.transitions.Transition;
-import net.rcode.nanomaps.transitions.TransitionController;
+import net.rcode.nanomaps.MapContentView;
+import net.rcode.nanomaps.MapState;
+import net.rcode.nanomaps.MapStateAware;
+import net.rcode.nanomaps.tile.TileSet.Record;
+import net.rcode.nanomaps.transition.Transition;
+import net.rcode.nanomaps.transition.TransitionController;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;

@@ -1,7 +1,7 @@
-package net.rcode.nanomaps.transitions;
+package net.rcode.nanomaps.transition;
 
-import net.rcode.nanomaps.Constants;
 import net.rcode.nanomaps.MapState;
+import net.rcode.nanomaps.util.Constants;
 import android.util.Log;
 
 /**

@@ -1,5 +1,6 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
+import net.rcode.nanomaps.util.CompositeDrawable;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;

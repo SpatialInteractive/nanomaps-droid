@@ -1,4 +1,4 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
 import java.util.Collection;
 import java.util.HashMap;

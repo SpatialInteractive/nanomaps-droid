@@ -11,7 +11,7 @@ import java.util.Map;
 import org.apache.http.HttpRequest;
 import org.apache.http.message.BasicHttpRequest;
 
-import net.rcode.nanomaps.Constants;
+import net.rcode.nanomaps.util.Constants;
 
 import android.net.Uri;
 import android.os.Handler;

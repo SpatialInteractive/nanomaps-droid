@@ -1,7 +1,8 @@
 package net.rcode.nanomaps;
 
-import net.rcode.nanomaps.transitions.LinearTransition;
-import net.rcode.nanomaps.transitions.TransitionController;
+import net.rcode.nanomaps.transition.LinearTransition;
+import net.rcode.nanomaps.transition.TransitionController;
+import net.rcode.nanomaps.util.Constants;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;

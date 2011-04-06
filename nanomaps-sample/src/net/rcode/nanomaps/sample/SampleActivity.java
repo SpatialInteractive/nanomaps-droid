@@ -2,9 +2,9 @@ package net.rcode.nanomaps.sample;
 
 import net.rcode.nanomaps.MapState;
 import net.rcode.nanomaps.MapSurface;
-import net.rcode.nanomaps.MapTileView;
-import net.rcode.nanomaps.UriTileSelector;
 import net.rcode.nanomaps.sample.widgets.MapControls;
+import net.rcode.nanomaps.tile.MapTileView;
+import net.rcode.nanomaps.tile.UriTileSelector;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;

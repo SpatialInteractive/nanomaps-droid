@@ -1,6 +1,8 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
 import java.util.Collection;
+
+import net.rcode.nanomaps.Projection;
 
 /**
  * Selects meta-data about tiles to display for a displayable area

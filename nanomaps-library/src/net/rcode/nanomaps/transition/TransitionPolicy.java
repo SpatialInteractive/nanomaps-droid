@@ -1,4 +1,4 @@
-package net.rcode.nanomaps.transitions;
+package net.rcode.nanomaps.transition;
 
 /**
  * Configurable policy settings for map transitions.

@@ -1,6 +1,9 @@
-package net.rcode.nanomaps;
+package net.rcode.nanomaps.tile;
 
 import java.util.Collection;
+
+import net.rcode.nanomaps.Projection;
+import net.rcode.nanomaps.util.DoubleBounds;
 
 /**
  * Base class for tile selectors that represent tiles in a cartesian
@@ -32,7 +35,7 @@ public abstract class CartesianTileSelector extends TileSelector {
 	public void select(Projection projection, double resolution, 
 			double x1, double y1, double x2, double y2, 
 			Collection<TileKey> destination) {
-		Bounds projectedBounds=projection.getProjectedExtent();
+		DoubleBounds projectedBounds=projection.getProjectedExtent();
 		boolean xinversion=projection.isXAxisInverted();
 		boolean yinversion=projection.isYAxisInverted();
 		int nativeLevel=(int) Math.round(projection.toLevel(resolution));

@@ -1,5 +1,7 @@
 package net.rcode.nanomaps;
 
+import net.rcode.nanomaps.util.DoubleBounds;
+
 /**
  * Define a map projection.
  * <p>
@@ -76,10 +78,10 @@ public interface Projection {
 	/**
 	 * @return the extent of the projected units
 	 */
-	public Bounds getProjectedExtent();
+	public DoubleBounds getProjectedExtent();
 	
 	/**
 	 * @return the extent in global units
 	 */
-	public Bounds getGlobalExtent();
+	public DoubleBounds getGlobalExtent();
 }
