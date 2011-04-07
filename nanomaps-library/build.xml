@@ -1,0 +1,48 @@
+<project name="nanomaps-droid" default="dist">
+	<property name="version" value="dev"/>
+	<property name="apilevel" value="4"/>
+	<property name="android.jar" location="${user.home}/android-sdk/platforms/android-${apilevel}/android.jar"/>
+	
+	<echo>Using android.jar ${android.jar}</echo>
+	
+	<target name="dist" depends="clean,jar,doc,site"/>
+	
+	<target name="clean">
+		<delete dir="build"/>
+	</target>
+	
+	<target name="compile">
+		<mkdir dir="build/classes"/>
+		<javac srcdir="src" destdir="build/classes" encoding="UTF-8" debug="true" target="1.5" source="1.5"
+			includeantruntime="false">
+			<classpath>
+				<path location="${android.jar}"/>
+			</classpath>
+		</javac>
+	</target>
+	
+	<target name="jar" depends="compile">
+		<jar jarfile="build/nanomaps-droid.jar" basedir="build/classes"/>
+	</target>
+	
+	<target name="doc">
+		<mkdir dir="build/javadoc"/>
+		<javadoc sourcepath="src" destdir="build/javadoc" encoding="UTF-8" doctitle="nanomaps-droid ${version} api" windowtitle="nanomaps-droid ${version} api">
+		</javadoc>
+	</target>
+	
+	<target name="site">
+		<mkdir dir="build/site"/>
+		<copy todir="build/site">
+			<fileset dir="site"/>
+		</copy>
+		
+		<mkdir dir="build/site/javadoc"/>
+		<copy todir="build/site/javadoc">
+			<fileset dir="build/javadoc"/>
+		</copy>
+		
+		<mkdir dir="build/site/download"/>
+		<copy tofile="build/site/download/nanomaps-droid-${version}.jar" file="build/nanomaps-droid.jar"/>
+	</target>
+</project>
