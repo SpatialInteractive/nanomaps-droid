@@ -6,9 +6,11 @@ import net.rcode.nanomaps.util.Constants;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.RelativeLayout;
 
 /**
@@ -19,12 +21,35 @@ import android.widget.RelativeLayout;
  * @author stella
  *
  */
-public class MapSurface extends RelativeLayout implements MapStateAware {
+public class MapSurface extends RelativeLayout implements MapStateAware, MapConstants {
+	/**
+	 * The background layer will contain background drawables, generally the
+	 * thatch pattern that is below the map
+	 */
+	public static final int LAYER_BACKGROUND=0;
+	
+	/**
+	 * The map layer should contain views for drawing the map (ie MapTileView)
+	 * stacked in order of display.  Touch events are handled from this layer.
+	 */
+	public static final int LAYER_MAP=10;
+	
+	/**
+	 * By convention, the SHADOW layer is where you will want to put overlay shadows
+	 */
+	public static final int LAYER_SHADOW=500;
+	
+	/**
+	 * By convention, the OVERLAY layer is where map overlays and markers should
+	 * be added
+	 */
+	public static final int LAYER_OVERLAY=1000;
+	
 	private TransitionController transitionController;
 	static final boolean DEBUG=true;
 	MapState mapState;
-	MapContentView backgroundLayer;
 	boolean didFirstDraw;
+	
 	
 	public MapSurface(Context context) {
 		super(context);
@@ -33,17 +58,52 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 		mapState.setListener(this);
 		setBackgroundColor(Color.GRAY);
 		
-		// Allocate the background layer
-		backgroundLayer=createContentView();
-		addView(backgroundLayer, createFillLayoutParams());
-		setupTouchEvents(backgroundLayer);
+		// Allocate the background layer and set it up with
+		// touch events
+		MapLayer mapLayer=accessLayer(LAYER_MAP, true);
+		setupTouchEvents(mapLayer);
 	}
 
-	private MapContentView createContentView() {
-		MapContentView mcv=new MapContentView(getContext());
-		return mcv;
+	/**
+	 * Find a map layer by order, optionally creating it at the correct insertion
+	 * point.  This method explicitly works for the no-layer case.
+	 * @param order
+	 * @param create
+	 * @return layer or null (if !create)
+	 */
+	private MapLayer accessLayer(int order, boolean create) {
+		int lastLayerIndex=-1;
+		for (int i=0; i<getChildCount(); i++) {
+			View child=getChildAt(i);
+			if (child instanceof MapLayer) {
+				MapLayer childLayer=(MapLayer) child;
+				int childOrder=childLayer.getOrder();
+				if (childOrder==order) return childLayer;
+				if (childOrder>order) {
+					// Insert here
+					if (create) {
+						childLayer=new MapLayer(getContext(), order);
+						super.addView(childLayer, i, createFillLayoutParams());
+						return childLayer;
+					} else {
+						return null;
+					}
+				} else {
+					lastLayerIndex=i;
+				}
+			}
+		}
+		
+		// not found
+		if (create) {
+			MapLayer childLayer=new MapLayer(getContext(), order);
+			super.addView(childLayer, lastLayerIndex+1, createFillLayoutParams());
+			return childLayer;
+		} else {
+			return null;
+		}
 	}
-
+	
 	public TransitionController getTransitionController() {
 		return transitionController;
 	}
@@ -59,10 +119,6 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 		return mapState;
 	}
 	
-	public MapContentView getBackgroundLayer() {
-		return backgroundLayer;
-	}
-	
 	/**
 	 * Called by an attached MapState when the map state is changed.
 	 * 
@@ -72,10 +128,13 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	public void mapStateUpdated(MapState mapState, boolean full) {
 		if (!didFirstDraw) return;
 		
-		if (DEBUG) Log.d(Constants.LOG_TAG, "mapStateUpdated(" + full + ")");
-		
-		// TODO: Iterate over all content views
-		backgroundLayer.mapStateUpdated(mapState, full);
+		// Any child can be MapStateAware - dispatch to those that are
+		for (int i=0; i<getChildCount(); i++) {
+			View child=getChildAt(i);
+			if (child instanceof MapStateAware) {
+				((MapStateAware)child).mapStateUpdated(mapState, full);
+			}
+		}
 	}
 	
 	@Override
@@ -201,11 +260,36 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	}
 	
 	// -- public api
+	public MapLayer getLayer(int order) {
+		return accessLayer(order, true);
+	}
+	
 	public int getMapMaxLevel() {
 		return mapState.getProjection().getMaxLevel();
 	}
 	public int getMapMinLevel() {
 		return mapState.getProjection().getMinLevel();
+	}
+	
+	/**
+	 * Translates a child's coordinates (as most often found in a MotionEvent)
+	 * to global viewport coordinates on this map.
+	 * @param point
+	 * @return true if successful, false if the view is not on this map
+	 */
+	public boolean translateChildToMap(View child, Point point) {
+		while (child!=this && child!=null) {
+			point.x+=child.getLeft();
+			point.y+=child.getTop();
+			
+			ViewParent parent=child.getParent();
+			if (parent instanceof View) {
+				child=(View) parent;
+			} else {
+				return false;
+			}
+		}
+		return child==this;
 	}
 	
 	/**
@@ -302,7 +386,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware {
 	 */
 	public Coordinate getMapLocation(int x, int y) {
 		double gx=mapState.getViewportGlobalX(x, y);
-		double gy=mapState.getViewportDisplayY(x, y);
+		double gy=mapState.getViewportGlobalY(x, y);
 		return Coordinate.xy(gx, gy);
 	}
 	

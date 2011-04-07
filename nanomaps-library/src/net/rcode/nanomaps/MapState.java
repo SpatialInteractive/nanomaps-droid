@@ -265,13 +265,6 @@ public class MapState {
 		return projection.inverseY(getViewportProjectedY(x,y));
 	}
 	
-	public double getViewportLatitude(int x, int y) {
-		return getViewportGlobalY(x, y);
-	}
-	
-	public double getViewportLongitude(int x, int y) {
-		return getViewportGlobalX(x,y);
-	}
 	
 	public double projectedToDisplayX(double projectedX) {
 		if (projection.isXAxisInverted()) {

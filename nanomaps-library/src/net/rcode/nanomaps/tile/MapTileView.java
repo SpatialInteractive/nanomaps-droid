@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-import net.rcode.nanomaps.MapContentView;
+import net.rcode.nanomaps.MapLayer;
 import net.rcode.nanomaps.MapState;
 import net.rcode.nanomaps.MapStateAware;
 import net.rcode.nanomaps.tile.TileSet.Record;
@@ -48,8 +48,8 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 		return selector;
 	}
 	
-	public MapContentView getContentView() {
-		return (MapContentView) getParent();
+	public MapLayer getContentView() {
+		return (MapLayer) getParent();
 	}
 	
 	public MapState getMapState() {
