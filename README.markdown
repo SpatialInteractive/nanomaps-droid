@@ -7,7 +7,7 @@ Links
 * [JavaDoc](http://stellaeof.github.com/nanomaps-droid/javadoc/)
 * [Current Jar File](http://stellaeof.github.com/nanomaps-droid/download/nanomaps-droid-0.1.0.jar)
 * [All Jar Files](https://github.com/stellaeof/nanomaps-droid/tree/gh-pages/download)
-* [Stupid Sample App APK](http://stellaeof.github.com/nanomaps-droid/download/nanomaps-sample-0.1.0.apk)
+* [Stupid Sample App APK](http://stellaeof.github.com/nanomaps-droid/download/nanomaps-sample-0.1.0.apk) - You can drag the pink pin around, swipe the uncertainty cone to move it and hit some buttons to play with transitions
 
 This is a rough port of my nanomaps javascript library to android.  It follows the same philosophy that a map library is really less about the map and more about integrating easily into the native widget environment.  Most map libraries try to do everything for you.  The nanomaps libraries just try to be as fast as possible doing the basics of displaying map imagery and georeferencing your views.  Otherwise, they get out of the way.
 
