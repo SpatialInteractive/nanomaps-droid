@@ -109,7 +109,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 As an additional restriction, it is not permitted to use this software in
-a way that makes unlicensed use of anyone's content or infringes on third party
-intellectual property (ie. make sure you have permission to display tiles
+a way that infringes on and entity's
+intellectual property rights (ie. make sure you have permission to display tiles
 and or other map related content).
 
