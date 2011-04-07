@@ -10,14 +10,13 @@ import net.rcode.nanomaps.tile.MapTileView;
 import net.rcode.nanomaps.tile.UriTileSelector;
 import net.rcode.nanomaps.util.Constants;
 import android.app.Activity;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -27,33 +26,40 @@ public class SampleActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //MapTileView mtv=new MapTileView(this, new UriTileSelector("http://h0.ortho.tiles.virtualearth.net/tiles/h${quadkey}.jpeg?g=131"));
+
+        // Parent container
+        FrameLayout frame=new FrameLayout(this);
         
-        RelativeLayout rl=new RelativeLayout(this);
-        rl.setBackgroundColor(Color.GREEN);
-        
+        // Construct the map
         final MapSurface map=new MapSurface(this);
-        rl.addView(map, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+        frame.addView(map, new FrameLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         map.setMapLocationZoom(Coordinate.latLng(47.616159, -122.320944), 15);
         
+        // Add tile layer using MapQuest OSM Tiles
         MapTileView mtv=new MapTileView(this, new UriTileSelector("http://otile${modulo:1}.mqcdn.com/tiles/1.0.0/osm/${level}/${tileX}/${tileY}.png"));
-        //MapTileView mtv=new MapTileView(this, new UriTileSelector("http://h0.ortho.tiles.virtualearth.net/tiles/h${quadkey}.jpeg?g=131"));
         map.getLayer(MapSurface.LAYER_MAP).addView(mtv);
         
+        // Add a shiny pink marker anchored at its bottom center
         ImageView marker1=new ImageView(this);
         marker1.setImageResource(R.drawable.pin_pink);
         map.addOverlay(marker1, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.61402, -122.318457),
         				MapSurface.BIAS_CENTER, MapSurface.BIAS_BOTTOM);
         attachClickEvents(map, marker1);
         
+        // Add a shiny blue orb marker anchored at its center
         ImageView marker2=new ImageView(this);
         marker2.setImageResource(R.drawable.orb_blue);
         map.addOverlay(marker2, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.616523, -122.318407),
         				MapSurface.BIAS_CENTER, MapSurface.BIAS_CENTER);
         
+        // Add an "uncertainty" circle with a radius of 60m
         CircleOverlay cov=new CircleOverlay(this);
         cov.setRadius(60);
         map.addOverlay(cov, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.615016, -122.316574));
         
+        // Add an "uncertainty circle plus heading cone" with radius
+        // of 120m, cone overshoot of 10px, heading of 45 degrees and uncertainty of 20 degrees
         UncertaintyHeadingOverlay ohv=new UncertaintyHeadingOverlay(this);
         ohv.setRadius(120);
         ohv.setHeadingConeOvershoot(10);
@@ -97,7 +103,7 @@ public class SampleActivity extends Activity {
 		});
         topBar.addView(btn);
         
-        setContentView(rl);
+        setContentView(frame);
         
         Log.d(Constants.LOG_TAG, "Inited");
     }
