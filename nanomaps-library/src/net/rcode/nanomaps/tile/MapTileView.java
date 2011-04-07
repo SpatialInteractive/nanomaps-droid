@@ -14,6 +14,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Paint.Style;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
@@ -25,11 +26,13 @@ import android.view.View;
  *
  */
 public class MapTileView extends View implements MapStateAware, Tile.StateChangedListener, Transition.Callback {
+	private static final boolean DEBUG_BOUNDS=false;
+	
 	static final Paint CLEAR_PAINT=new Paint();
 	static {
 		CLEAR_PAINT.setARGB(0, 0, 0, 0);
 	}
-
+	
 	private TileSelector selector;
 	private TileSet currentTileSet=new TileSet();
 	private TileSet transitionTileSet=new TileSet();
@@ -50,10 +53,6 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 	
 	public MapLayer getContentView() {
 		return (MapLayer) getParent();
-	}
-	
-	public MapState getMapState() {
-		return getContentView().getMapState();
 	}
 	
 	public TransitionController getTransitionController() {
@@ -255,11 +254,6 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 	
 	@Override
 	protected void onDraw(final Canvas canvas) {
-		// On first draw we may not have had a map state update yet
-		if (currentTileSet.isEmpty()) {
-			mapStateUpdated(getMapState(), true);
-		}
-		
 		Rect clip=canvas.getClipBounds();
 		
 		for (TileSet.Record record: currentTileSet.records()) {
@@ -274,6 +268,13 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 					// Clear the area
 					//Log.d(Constants.LOG_TAG, "Clearing " + record.displayRect);
 					canvas.drawRect(record.displayRect, CLEAR_PAINT);
+				}
+				
+				if (DEBUG_BOUNDS) {
+					Paint stroke=new Paint();
+					stroke.setStyle(Style.STROKE);
+					stroke.setColor(0xffff0000);
+					canvas.drawRect(record.displayRect, stroke);
 				}
 			}
 		}

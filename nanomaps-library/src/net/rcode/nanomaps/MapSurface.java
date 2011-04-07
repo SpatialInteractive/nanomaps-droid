@@ -272,6 +272,69 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	}
 	
 	/**
+	 * Add an unmanaged overlay to the given map layer.  This
+	 * is a shortcut for getLayer(order).addView(child).
+	 * This method should only be used for global overlays such as
+	 * MapTileView or other views that internally manage their
+	 * own location.
+	 * 
+	 * @param order
+	 * @param child
+	 */
+	public void addOverlay(View child, int layer) {
+		getLayer(layer).addView(child);
+	}
+	
+	/**
+	 * Adds a managed View to the given layer at the given global position.
+	 * Shortcut for getLayer(layer).addView(child, new MapLayer.LayoutParams(location));
+	 * @param order
+	 * @param location
+	 */
+	public void addOverlay(View child, int layer, Coordinate location) {
+		getLayer(layer).addView(child, new MapLayer.LayoutParams(location));
+	}
+	
+	/**
+	 * Adds a managed View to the given layer at the given global position and offset.
+	 * Shortcut for 
+	 * 		getLayer(layer).addView(child, new MapLayer.LayoutParams(location, offsetX, offsetY));
+
+	 * @param child
+	 * @param layer
+	 * @param location
+	 * @param offsetX
+	 * @param offsetY
+	 */
+	public void addOverlay(View child, int layer, Coordinate location, int offsetX, int offsetY) {
+		getLayer(layer).addView(child, new MapLayer.LayoutParams(location, offsetX, offsetY));
+	}
+	
+	/**
+	 * If the child is attached to a MapLayer call the refreshChildLayout() method on it.
+	 * Call this method after changing any fields in the overlay's LayoutParams
+	 * @param child
+	 */
+	public void refreshOverlayLayout(View child) {
+		ViewParent parent=child.getParent();
+		if (parent!=null && parent instanceof MapLayer) {
+			((MapLayer)parent).refreshChildLayout(child);
+		}
+	}
+	
+	/**
+	 * Shortcut to update the Location in a child's LayoutParams and refresh it
+	 * in its parent.  The child must have been added to the map already.
+	 * @param child
+	 * @param location
+	 */
+	public void setOverlayPosition(View child, Coordinate location) {
+		((MapLayer.LayoutParams)child.getLayoutParams()).location=location;
+		refreshOverlayLayout(child);
+	}
+	
+	
+	/**
 	 * Translates a child's coordinates (as most often found in a MotionEvent)
 	 * to global viewport coordinates on this map.
 	 * @param point
@@ -369,8 +432,8 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	 * Based on policy, the transition may be an animation or
 	 * just a jump 
 	 * @param toLevel
-	 * @param x
-	 * @param y
+	 * @param offsetX
+	 * @param offsetY
 	 * @return true if animating, false if jump
 	 */
 	public boolean transitionMapZoom(double toLevel) {
@@ -492,8 +555,8 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	 * to the map center
 	 * @param global
 	 * @param level
-	 * @param x
-	 * @param y
+	 * @param offsetX
+	 * @param offsetY
 	 * @return true if transitioning, false if jump
 	 */
 	public final boolean transitionMapLocationZoom(Coordinate global, int level) {

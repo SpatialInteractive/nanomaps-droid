@@ -1,5 +1,6 @@
 package net.rcode.nanomaps;
 
+import net.rcode.nanomaps.util.Constants;
 import net.rcode.nanomaps.util.DoubleBounds;
 
 /**
@@ -176,6 +177,23 @@ public class MapState {
 			lockUpdatedFull=true;
 			unlock();
 		}
+	}
+	
+	/**
+	 * Get the heading in radians that the map is oriented towards.  This is
+	 * measured relative to the positive Y display axis, just like a compass.
+	 * @return heading
+	 */
+	public double getHeading() {
+		return 0;
+	}
+	
+	/**
+	 * Get the heading translated to degrees (convenience)
+	 * @return heading in degrees
+	 */
+	public double getHeadingDegrees() {
+		return getHeading() * Constants.RAD_TO_DEG;
 	}
 	
 	public double getLevel() {

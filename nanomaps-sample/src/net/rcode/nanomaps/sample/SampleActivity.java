@@ -8,6 +8,7 @@ import net.rcode.nanomaps.sample.widgets.MapControls;
 import net.rcode.nanomaps.tile.MapTileView;
 import net.rcode.nanomaps.tile.UriTileSelector;
 import net.rcode.nanomaps.util.Constants;
+import net.rcode.nanomaps.widget.CircleOverlayView;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -40,20 +41,18 @@ public class SampleActivity extends Activity {
         
         ImageView marker1=new ImageView(this);
         marker1.setImageResource(R.drawable.pin_pink);
-        map.getLayer(MapSurface.LAYER_OVERLAY).addView(marker1,
-        		new MapLayer.LayoutParams(
-        				Coordinate.latLng(47.61402, -122.318457),
-        				MapSurface.BIAS_CENTER, MapSurface.BIAS_BOTTOM
-        				));
+        map.addOverlay(marker1, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.61402, -122.318457),
+        				MapSurface.BIAS_CENTER, MapSurface.BIAS_BOTTOM);
         attachClickEvents(map, marker1);
         
         ImageView marker2=new ImageView(this);
         marker2.setImageResource(R.drawable.orb_blue);
-        map.getLayer(MapSurface.LAYER_OVERLAY).addView(marker2,
-        		new MapLayer.LayoutParams(
-        				Coordinate.latLng(47.616523, -122.318407),
-        				MapSurface.BIAS_CENTER, MapSurface.BIAS_CENTER
-        				));
+        map.addOverlay(marker2, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.616523, -122.318407),
+        				MapSurface.BIAS_CENTER, MapSurface.BIAS_CENTER);
+        
+        CircleOverlayView cov=new CircleOverlayView(this);
+        cov.setRadius(60);
+        map.addOverlay(cov, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.615016, -122.316574));
         
         // Add zoom control
         MapControls mapControls=new MapControls(map);
@@ -105,18 +104,25 @@ public class SampleActivity extends Activity {
 				Point xy=new Point((int) event.getX(), (int) event.getY());
 				map.translateChildToMap(v, xy);
 				
-				if (action==MotionEvent.ACTION_DOWN || action==MotionEvent.ACTION_UP) {
+				if (action==MotionEvent.ACTION_DOWN) {
 					anchor=xy;
+					v.bringToFront();
 					return true;
 				}
+				if (action==MotionEvent.ACTION_UP) {
+					return true;
+				}
+				
 				if (action==MotionEvent.ACTION_MOVE) {
 					Coordinate location=map.getMapLocation(xy.x, xy.y);
 					Log.d(Constants.LOG_TAG, "Moving to " + location + " for (" + xy.x + "," + xy.y + ")");
 
+					/*
 					MapLayer.LayoutParams lp=(LayoutParams) v.getLayoutParams();
 					v.setLayoutParams(lp.modify(location));
-					
-					
+					map.invalidate();
+					*/
+					map.setOverlayPosition(v, location);
 					return true;
 				}
 				return true;
