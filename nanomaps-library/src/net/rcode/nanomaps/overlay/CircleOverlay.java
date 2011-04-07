@@ -1,4 +1,4 @@
-package net.rcode.nanomaps.widget;
+package net.rcode.nanomaps.overlay;
 
 import net.rcode.nanomaps.MapConstants;
 import net.rcode.nanomaps.MapLayer;
@@ -23,12 +23,12 @@ import android.view.ViewGroup.LayoutParams;
  * @author stella
  *
  */
-public class CircleOverlayView extends View implements MapStateAware {
+public class CircleOverlay extends View implements MapStateAware {
 	/**
 	 * Add fudged padding to the width and height.  Should be an odd number.
 	 * Makes sure to capture an anti-alias effects, etc.
 	 */
-	private static final int FUDGE_PADDING=5;
+	protected static final int FUDGE_PADDING=5;
 	
 	protected MapState mapState;
 	protected float physicalRadius;
@@ -39,7 +39,7 @@ public class CircleOverlayView extends View implements MapStateAware {
 	protected int size;
 	protected int radiusPixels=-1;
 	
-	public CircleOverlayView(Context context) {
+	public CircleOverlay(Context context) {
 		super(context);
 		backgroundPaint=new Paint();
 		backgroundPaint.setColor(0x700000ff);
@@ -91,6 +91,8 @@ public class CircleOverlayView extends View implements MapStateAware {
 	 */
 	public void setRadius(float radius) {
 		this.physicalRadius = radius;
+		updateMetrics();
+		invalidate();
 	}
 	
 	/**
@@ -98,9 +100,8 @@ public class CircleOverlayView extends View implements MapStateAware {
 	 */
 	protected void updateMetrics() {
 		if (mapState==null) return;
-		radiusPixels=(int) Math.round(physicalRadius / mapState.getResolution());
 		int left=getLeft(), top=getTop();
-		size=radiusPixels*2 + FUDGE_PADDING;
+		size=calculateSize();
 		
 		if (Constants.DEBUG) Log.d(Constants.LOG_TAG, "CircleOverlayView.updateMetrics: size=" + size);
 		
@@ -111,6 +112,20 @@ public class CircleOverlayView extends View implements MapStateAware {
 		
 		// There is always a full invalidate after a significant
 		// mapState change so don't retrigger
+	}
+	
+	/**
+	 * Calculate the needed size of the display area.  The box defined by size must have
+	 * the anchor point at the center.
+	 * <p>
+	 * This method should also stash any other state it needs to draw.  It will only ever be
+	 * called if mapState!=null
+	 * 
+	 * @return size of the drawable area
+	 */
+	protected int calculateSize() {
+		radiusPixels=(int) Math.round(physicalRadius / mapState.getResolution());
+		return radiusPixels*2 + FUDGE_PADDING;
 	}
 	
 	@Override

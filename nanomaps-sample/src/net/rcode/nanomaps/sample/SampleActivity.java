@@ -1,14 +1,14 @@
 package net.rcode.nanomaps.sample;
 
 import net.rcode.nanomaps.Coordinate;
-import net.rcode.nanomaps.MapLayer;
 import net.rcode.nanomaps.MapSurface;
 import net.rcode.nanomaps.MapLayer.LayoutParams;
+import net.rcode.nanomaps.overlay.CircleOverlay;
+import net.rcode.nanomaps.overlay.UncertaintyHeadingOverlay;
 import net.rcode.nanomaps.sample.widgets.MapControls;
 import net.rcode.nanomaps.tile.MapTileView;
 import net.rcode.nanomaps.tile.UriTileSelector;
 import net.rcode.nanomaps.util.Constants;
-import net.rcode.nanomaps.widget.CircleOverlayView;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -50,9 +50,17 @@ public class SampleActivity extends Activity {
         map.addOverlay(marker2, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.616523, -122.318407),
         				MapSurface.BIAS_CENTER, MapSurface.BIAS_CENTER);
         
-        CircleOverlayView cov=new CircleOverlayView(this);
+        CircleOverlay cov=new CircleOverlay(this);
         cov.setRadius(60);
         map.addOverlay(cov, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.615016, -122.316574));
+        
+        UncertaintyHeadingOverlay ohv=new UncertaintyHeadingOverlay(this);
+        ohv.setRadius(120);
+        ohv.setHeadingConeOvershoot(10);
+        ohv.setHeading(45, 20);
+        map.addOverlay(ohv, MapSurface.LAYER_OVERLAY, Coordinate.latLng(47.619095, -122.321499));
+        attachChangeHeadingEvents(ohv);
+        
         
         // Add zoom control
         MapControls mapControls=new MapControls(map);
@@ -94,9 +102,39 @@ public class SampleActivity extends Activity {
         Log.d(Constants.LOG_TAG, "Inited");
     }
 
-    private void attachClickEvents(final MapSurface map, View v) {
-    	v.setOnTouchListener(new View.OnTouchListener() {
+    private void attachChangeHeadingEvents(final UncertaintyHeadingOverlay ohv) {
+    	ohv.setOnTouchListener(new View.OnTouchListener() {
     		Point anchor;
+    		
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				int action=event.getAction();
+				Point xy=new Point((int) event.getX(), (int) event.getY());
+				
+				if (action==MotionEvent.ACTION_DOWN) {
+					anchor=xy;
+					v.bringToFront();
+					return true;
+				}
+				if (action==MotionEvent.ACTION_UP) {
+					return true;
+				}
+				
+				if (action==MotionEvent.ACTION_MOVE) {
+					int deltaX=xy.x - anchor.x;
+					int deltaY=xy.y - anchor.y;
+					anchor=xy;
+					
+					ohv.setHeading((ohv.getHeading()+deltaX)%360, (ohv.getHeadingUncertainty()+deltaY)%360);
+					return true;
+				}
+				return true;
+			}
+    	});
+	}
+
+	private void attachClickEvents(final MapSurface map, View v) {
+    	v.setOnTouchListener(new View.OnTouchListener() {
     		
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
@@ -105,7 +143,6 @@ public class SampleActivity extends Activity {
 				map.translateChildToMap(v, xy);
 				
 				if (action==MotionEvent.ACTION_DOWN) {
-					anchor=xy;
 					v.bringToFront();
 					return true;
 				}

@@ -184,7 +184,7 @@ public class MapState {
 	 * measured relative to the positive Y display axis, just like a compass.
 	 * @return heading
 	 */
-	public double getHeading() {
+	public float getHeading() {
 		return 0;
 	}
 	
@@ -192,8 +192,8 @@ public class MapState {
 	 * Get the heading translated to degrees (convenience)
 	 * @return heading in degrees
 	 */
-	public double getHeadingDegrees() {
-		return getHeading() * Constants.RAD_TO_DEG;
+	public float getHeadingDegrees() {
+		return getHeading() * Constants.FRAD_TO_DEG;
 	}
 	
 	public double getLevel() {
