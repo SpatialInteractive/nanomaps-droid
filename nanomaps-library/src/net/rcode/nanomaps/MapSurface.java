@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -51,8 +52,22 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	boolean didFirstDraw;
 	
 	
+	public MapSurface(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
+		init();
+	}
+
+	public MapSurface(Context context, AttributeSet attrs) {
+		super(context, attrs);
+		init();
+	}
+
 	public MapSurface(Context context) {
 		super(context);
+		init();
+	}
+	
+	protected void init() {
 		transitionController=new TransitionController();
 		mapState=new MapState(WebMercatorProjection.DEFAULT);
 		mapState.setListener(this);
@@ -63,7 +78,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 		MapLayer mapLayer=accessLayer(LAYER_MAP, true);
 		setupTouchEvents(mapLayer);
 	}
-
+	
 	/**
 	 * Find a map layer by order, optionally creating it at the correct insertion
 	 * point.  This method explicitly works for the no-layer case.

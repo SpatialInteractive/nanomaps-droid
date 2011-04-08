@@ -33,6 +33,7 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 		CLEAR_PAINT.setARGB(0, 0, 0, 0);
 	}
 	
+	private MapState mapState;
 	private TileSelector selector;
 	private TileSet currentTileSet=new TileSet();
 	private TileSet transitionTileSet=new TileSet();
@@ -49,6 +50,24 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 	
 	public TileSelector getSelector() {
 		return selector;
+	}
+	
+	public void setSelector(TileSelector selector) {
+		if (selector==this.selector) return;
+		this.selector=selector;
+		
+		// Reset state
+		currentTileSet.clear();
+		transitionTileSet.clear();
+		transitionLocked=false;
+		oldTileSet.clear();
+		updatedKeys.clear();
+		newTileRecords.clear();
+		transitionController=null;
+		
+		if (mapState!=null) {
+			mapStateUpdated(mapState, true);
+		}
 	}
 	
 	public MapLayer getContentView() {
@@ -112,6 +131,8 @@ public class MapTileView extends View implements MapStateAware, Tile.StateChange
 	
 	@Override
 	public void mapStateUpdated(MapState mapState, boolean full) {
+		this.mapState=mapState;
+		
 		TransitionController tc=getTransitionController();
 		if (!transitionLocked && tc.isTransitionActive()) {
 			// Prime pending tiles and lock transition
