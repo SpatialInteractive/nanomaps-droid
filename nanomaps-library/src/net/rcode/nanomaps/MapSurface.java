@@ -326,6 +326,16 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	}
 	
 	/**
+	 * Convenience method to remove a view added to a MapLayer that is a child of this map
+	 * @param child
+	 */
+	public void removeOverlay(View child) {
+		MapLayer parent=(MapLayer) child.getParent();
+		if (parent==null) return;
+		parent.removeView(child);
+	}
+	
+	/**
 	 * If the child is attached to a MapLayer call the refreshChildLayout() method on it.
 	 * Call this method after changing any fields in the overlay's LayoutParams
 	 * @param child
@@ -374,7 +384,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	 * @return A new linear transition
 	 */
 	public LinearTransition createTransition() {
-		return new LinearTransition(mapState);
+		return new LinearTransition(mapState, mapState);
 	}
 	
 	/**
@@ -436,7 +446,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	 * @return true if animating, false if jump
 	 */
 	public boolean transitionMapZoom(double toLevel, int x, int y) {
-		LinearTransition t=new LinearTransition(getMapState());
+		LinearTransition t=createTransition();
 		t.getFinalMapState().setLevel(clampMapZoom(toLevel), x, y);
 		transitionController.start(t, 250);
 		return true;
@@ -505,7 +515,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	 * @return true if transitioned, false if jumped
 	 */
 	public boolean transitionMapLocation(Coordinate global, int x, int y) {
-		LinearTransition t=new LinearTransition(getMapState());
+		LinearTransition t=createTransition();
 		t.getFinalMapState().setViewportGlobal(global.getX(), global.getY(), x, y);
 		transitionController.start(t, 1000);
 		return true;
@@ -555,7 +565,7 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	 * @return true if transitioning, false if jump
 	 */
 	public boolean transitionMapLocationZoom(Coordinate global, double level, int x, int y) {
-		LinearTransition t=new LinearTransition(getMapState());
+		LinearTransition t=createTransition();
 		
 		t.getFinalMapState().setLevel(clampMapZoom(level), x, y);
 		t.getFinalMapState().setViewportGlobal(global.getX(), global.getY(), x, y);

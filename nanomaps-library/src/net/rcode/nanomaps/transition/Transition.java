@@ -22,9 +22,9 @@ public abstract class Transition {
 	
 	private List<Callback> callbacks;
 	
-	public Transition(MapState activeMapState) {
+	public Transition(MapState activeMapState, MapState initialMapState) {
 		this.activeMapState=activeMapState;
-		this.initialMapState=activeMapState.dup();
+		this.initialMapState=initialMapState;
 		this.finalMapState=activeMapState.dup();
 	}
 	

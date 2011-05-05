@@ -14,8 +14,8 @@ public class LinearTransition extends Transition {
 	private double projectedYStart, projectedYDelta;
 	private double resolutionStart, resolutionDelta;
 	
-	public LinearTransition(MapState activeMapState) {
-		super(activeMapState);
+	public LinearTransition(MapState activeMapState, MapState initialMapState) {
+		super(activeMapState, initialMapState);
 	}
 	
 	@Override
