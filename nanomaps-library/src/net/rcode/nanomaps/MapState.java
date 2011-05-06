@@ -126,7 +126,7 @@ public class MapState {
 		}
 	}
 	
-	private void _updated(boolean fullUpdate) {
+	void _updated(boolean fullUpdate) {
 		if (lockCount>0) {
 			lockUpdated=true;
 			if (fullUpdate) lockUpdatedFull=true;

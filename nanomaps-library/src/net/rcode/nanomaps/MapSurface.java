@@ -153,18 +153,24 @@ public class MapSurface extends RelativeLayout implements MapStateAware, MapCons
 	}
 	
 	@Override
-	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-		super.onSizeChanged(w, h, oldw, oldh);
-		
+	protected void onLayout(boolean changed, int l, int t, int r, int b) {
 		// Preserve the center point on size change
+		int oldw=mapState.getViewportWidth(), oldh=mapState.getViewportHeight();
 		double oldx=mapState.getViewportDisplayX(oldw/2, oldh/2);
 		double oldy=mapState.getViewportDisplayY(oldw/2, oldh/2);
-		
+
+		super.onLayout(changed, l, t, r, b);
+
+		// Need to update mapState after children have laid themselves out or else
+		// they may not know to fill the new viewport
+		int w=r-l, h=b-t;		
+		mapState.lock();
 		mapState.setViewportSize(w, h);
-		
 		mapState.setViewportDisplay(oldx, oldy, w/2, h/2);
+		mapState._updated(true);
+		mapState.unlock();
 	}
-	
+		
 	@Override
 	protected void onAttachedToWindow() {
 		super.onAttachedToWindow();
